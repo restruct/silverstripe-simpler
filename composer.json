@@ -1,0 +1,29 @@
+{
+    "name": "restruct/silverstripe-simpler",
+    "type": "silverstripe-vendormodule",
+    "description": "Tries to make Silverstripe development a bit simpler by naively re-introducting some 'common sense'/old-fashioned/SS3 basics like global Bootstrap & jQuery and a modal",
+    "keywords": [
+        "silverstripe",
+        "KISS"
+    ],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Restruct",
+            "email": "dev@restruct.nl"
+        }
+    ],
+    "require": {
+        "silverstripe/framework": "^4"
+    },
+    "autoload": {
+        "psr-4": {
+            "Restruct\\Silverstripe\\Simpler\\": "src/"
+        }
+    },
+    "extra": {
+        "expose": [
+            "client/dist"
+        ]
+    }
+}
