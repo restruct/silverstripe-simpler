@@ -1,6 +1,6 @@
 # Simpler Silverstripe
 
-This module tries to make Silverstripe interface development a bit simpler by naively re-introducting some traditional basics:
+This module tries to make Silverstripe Admin interface development a bit simpler by naively re-introducting some traditional basics:
 
 ## Added functionality, so far:
 - 'Synthetic' JS load/unload events (`DOMNodesInserted`/`DOMNodesRemoved`) for dynamic inserts/react components
