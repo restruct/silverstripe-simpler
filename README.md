@@ -3,9 +3,10 @@
 This module tries to make Silverstripe interface development a bit simpler by naively re-introducting some 'common sense'/old-fashioned/SS3 basics:
 
 ## So far:
-- global Bootstrap js
-- global $ & jQue*e*ry (it IS a bit different indeed)
-- even a global VueJS (I know, crazy!)
+- (global) Bootstrap js
+- (global) $ & jQue**e**ry (has to be slightly different indeed, as jquery is taken)  
+  <img width="136" src="https://user-images.githubusercontent.com/1005986/122156443-4043b880-ce69-11eb-9659-efe9ad3f3f18.png">
+- even (global) VueJS (I know, crazy!)
 - simple modal/popup (based on VueJS)
 
 ## JS event for dynamically inserted & removed DOM nodes, even react components (sort of Entwine onmatch/onadd does, without polling)
@@ -52,6 +53,7 @@ document.addEventListener("DOMNodesInserted", function () {
 ```
 
 ### Modal dialog
+<img width="450" src="https://user-images.githubusercontent.com/1005986/122156433-3de15e80-ce69-11eb-9787-b4dd7d39f371.png">
 Opening a simple modal dialog is a matter of setting some properties of the (again, global) `simpler` object:
 
 ```JS
