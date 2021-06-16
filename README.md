@@ -1,14 +1,19 @@
 # Simpler Silverstripe
 
-This module tries to make Silverstripe interface development a bit simpler by naively re-introducting some 'common sense'/old-fashioned/SS3 basics:
+This module tries to make Silverstripe Admin interface development a bit simpler by naively re-introducting some traditional basics.
 
-## So far:
-- global Bootstrap js
-- global $ & jQue*e*ry (it IS a bit different indeed)
-- even a global VueJS (I know, crazy!)
-- simple modal/popup (based on VueJS)
+## Added functionality, so far:
+- 'Synthetic' JS load/unload events (`DOMNodesInserted`/`DOMNodesRemoved`) for dynamic inserts/react components
+- Simple modal dialog (based on VueJS & Bootstrap)
 
-## JS event for dynamically inserted & removed DOM nodes, even react components (sort of Entwine onmatch/onadd does, without polling)
+### Extra JS
+- (global) Bootstrap js (mainly for modal, but all-included)
+- (global) $ & jQue**e**ry 3 (has to be slightly different indeed, as jquery is taken)  
+  <img width="136" src="https://user-images.githubusercontent.com/1005986/122156443-4043b880-ce69-11eb-9659-efe9ad3f3f18.png">
+- even (global) VueJS 2 (I know, crazy!)
+
+## JS event for dynamically inserted & removed DOM nodes, even react components
+(sort of what Entwine onmatch/onadd does, but without the polling and also working for react-rendered areas)
 - To have your JS executed even when a form/fragment gets inserted from an Ajax/XHR request, listen for `DOMNodesInserted`
 - To remove/destroy JS stuff, listen for `DOMNodesRemoved`
 - The event object received by the handler contains an event.detail.type value:
@@ -30,7 +35,7 @@ document.addEventListener("DOMNodesRemoved", function (event) {
 ```
 
 ### Example: FilePond
-As a practical example, this module contains a 'compatibility layer' for the excelent FilePond module to also initialize filepond on dynamically inserted content
+As a practical example, this module contains a 'compatibility layer' for the excelent FilePond module to also initialize filepond on dynamically inserted content *(this code is already contained in this module, just copied here as an example of how the events work)*
 
 ```JS
 document.addEventListener("DOMNodesInserted", function () {
@@ -51,7 +56,8 @@ document.addEventListener("DOMNodesInserted", function () {
 });
 ```
 
-### Modal dialog
+## Modal dialog
+<img width="450" src="https://user-images.githubusercontent.com/1005986/122156433-3de15e80-ce69-11eb-9787-b4dd7d39f371.png">
 Opening a simple modal dialog is a matter of setting some properties of the (again, global) `simpler` object:
 
 ```JS
