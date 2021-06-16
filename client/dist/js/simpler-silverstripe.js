@@ -30085,17 +30085,19 @@ window.simpler = {
   window.jQueery = (jquery__WEBPACK_IMPORTED_MODULE_0___default());
   window.$ = (jquery__WEBPACK_IMPORTED_MODULE_0___default());
   window.Vue = vue__WEBPACK_IMPORTED_MODULE_2__.default; // global Vue (maybe 'expose' instead once I figure out how to do that...)
-  // DOMNodesInserted & DOMNodesRemoved
-
-  document.addEventListener('DOMNodesInserted', function (event) {
-    console.log('RECEIVING (document): DOMNodesInserted', event); // $('.vue-instance').not('.vue-inited').each(function (){
-    //     console.log('Paint it RED');
-    //     $(this).css('color','red').addClass('vue-inited');
-    //     new Vue({
-    //         el: this,
-    //     });
-    // });
-  });
+  // // DEV: output DOMNodesInserted & DOMNodesRemoved info
+  // document.addEventListener('DOMNodesInserted', (event) => {
+  //
+  //     console.log('RECEIVING (document): DOMNodesInserted', event);
+  //
+  //     // $('.vue-instance').not('.vue-inited').each(function (){
+  //     //     console.log('Paint it RED');
+  //     //     $(this).css('color','red').addClass('vue-inited');
+  //     //     new Vue({
+  //     //         el: this,
+  //     //     });
+  //     // });
+  // });
 })(); //
 // Init stuff which needs to be triggered just once on real pageload/DOMContentLoaded's
 //

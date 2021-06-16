@@ -33,19 +33,19 @@ window.simpler = {
     window.$ = jQueery;
     window.Vue = Vue; // global Vue (maybe 'expose' instead once I figure out how to do that...)
 
-    // DOMNodesInserted & DOMNodesRemoved
-    document.addEventListener('DOMNodesInserted', (event) => {
-
-        console.log('RECEIVING (document): DOMNodesInserted', event);
-
-        // $('.vue-instance').not('.vue-inited').each(function (){
-        //     console.log('Paint it RED');
-        //     $(this).css('color','red').addClass('vue-inited');
-        //     new Vue({
-        //         el: this,
-        //     });
-        // });
-    });
+    // // DEV: output DOMNodesInserted & DOMNodesRemoved info
+    // document.addEventListener('DOMNodesInserted', (event) => {
+    //
+    //     console.log('RECEIVING (document): DOMNodesInserted', event);
+    //
+    //     // $('.vue-instance').not('.vue-inited').each(function (){
+    //     //     console.log('Paint it RED');
+    //     //     $(this).css('color','red').addClass('vue-inited');
+    //     //     new Vue({
+    //     //         el: this,
+    //     //     });
+    //     // });
+    // });
 
 })();
 
