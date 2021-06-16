@@ -35,7 +35,7 @@ document.addEventListener("DOMNodesRemoved", function (event) {
 ```
 
 ### Example: FilePond
-As a practical example, this module contains a 'compatibility layer' for the excelent FilePond module to also initialize filepond on dynamically inserted content
+As a practical example, this module contains a 'compatibility layer' for the excelent FilePond module to also initialize filepond on dynamically inserted content *(this code is already contained in this module, just copied here as an example of how the events work)*
 
 ```JS
 document.addEventListener("DOMNodesInserted", function () {
