@@ -35,20 +35,19 @@ document.addEventListener("DOMNodesRemoved", function (event) {
 ```
 
 ### Example: FilePond
-As a practical example, this module contains a 'compatibility layer' for the excelent FilePond module to also initialize filepond on dynamically inserted content *(this code is already contained in this module, just copied here as an example of how the events work)*
+As a practical example, this module contains a 'compatibility layer' for the excelent [FilePond module](https://github.com/lekoala/silverstripe-filepond) to also initialize filepond on dynamically inserted content *(this code is already contained in this module, just copied here as an example of how the events work)*
 
 ```JS
 document.addEventListener("DOMNodesInserted", function () {
+    // Just a precaution to skip execution if we don't have a FilePond yet...
     if (typeof FilePond !== "undefined") {
-        // Attach filepond to all related inputs
+        // Now attach filepond to any newly inserted file inputs
         var anchors = document.querySelectorAll('input[type="file"].filepond');
         for (var i = 0; i < anchors.length; i++) {
             var el = anchors[i];
             var pond = FilePond.create(el);
             var config = JSON.parse(el.dataset.config);
             for (var key in config) {
-                // We can set the properties directly in the instance
-                // @link https://pqina.nl/filepond/docs/patterns/api/filepond-instance/#properties
                 pond[key] = config[key];
             }
         }
