@@ -56,8 +56,9 @@ document.addEventListener("DOMNodesInserted", function () {
 ```
 
 ## Modal dialog
-<img width="450" src="https://user-images.githubusercontent.com/1005986/122156433-3de15e80-ce69-11eb-9787-b4dd7d39f371.png">
-Opening a simple modal dialog is a matter of setting some properties of the (again, global) `simpler` object:
+<img width="450" src="https://user-images.githubusercontent.com/1005986/122156433-3de15e80-ce69-11eb-9787-b4dd7d39f371.png"><br>
+Opening a simple modal dialog is a matter of setting some properties of the (again, global) `simpler` object.<br>
+Example of how the [Restruct Shortcodable module](https://github.com/restruct/silverstripe-shortcodable) opens the shortcode form dialog:
 
 ```JS
 openDialog: function() {
