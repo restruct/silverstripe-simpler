@@ -7,12 +7,7 @@
         "KISS"
     ],
     "license": "MIT",
-    "authors": [
-        {
-            "name": "Restruct",
-            "email": "dev@restruct.nl"
-        }
-    ],
+    "authors": [ { "name": "Restruct", "email": "dev@restruct.nl", "homepage": "https://restruct.nl" } ],
     "require": {
         "silverstripe/framework": "^4"
     },
