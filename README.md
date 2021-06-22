@@ -75,3 +75,6 @@ openDialog: function() {
         simpler.modal.bodyHtml = $('#xhr_buffer').html(data).html();
     });
 }
+
+## NOTES
+- Check [MutationObserver](https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver) (& [here](https://www.smashingmagazine.com/2019/04/mutationobserver-api-guide/)) to use instead of React transformer
