@@ -35,20 +35,19 @@ document.addEventListener("DOMNodesRemoved", function (event) {
 ```
 
 ### Example: FilePond
-As a practical example, this module contains a 'compatibility layer' for the excelent FilePond module to also initialize filepond on dynamically inserted content *(this code is already contained in this module, just copied here as an example of how the events work)*
+As a practical example, this module contains a 'compatibility layer' for the excelent [FilePond module](https://github.com/lekoala/silverstripe-filepond) to also initialize filepond on dynamically inserted content *(this code is already contained in this module, just copied here as an example of how the events work)*
 
 ```JS
 document.addEventListener("DOMNodesInserted", function () {
+    // Just a precaution to skip execution if we don't have a FilePond yet...
     if (typeof FilePond !== "undefined") {
-        // Attach filepond to all related inputs
+        // Now attach filepond to any newly inserted file inputs
         var anchors = document.querySelectorAll('input[type="file"].filepond');
         for (var i = 0; i < anchors.length; i++) {
             var el = anchors[i];
             var pond = FilePond.create(el);
             var config = JSON.parse(el.dataset.config);
             for (var key in config) {
-                // We can set the properties directly in the instance
-                // @link https://pqina.nl/filepond/docs/patterns/api/filepond-instance/#properties
                 pond[key] = config[key];
             }
         }
@@ -57,8 +56,9 @@ document.addEventListener("DOMNodesInserted", function () {
 ```
 
 ## Modal dialog
-<img width="450" src="https://user-images.githubusercontent.com/1005986/122156433-3de15e80-ce69-11eb-9787-b4dd7d39f371.png">
-Opening a simple modal dialog is a matter of setting some properties of the (again, global) `simpler` object:
+<img width="450" src="https://user-images.githubusercontent.com/1005986/122156433-3de15e80-ce69-11eb-9787-b4dd7d39f371.png"><br>
+Opening a simple modal dialog is a matter of setting some properties of the (again, global) `simpler` object.<br>
+Example of how the [Restruct Shortcodable module](https://github.com/restruct/silverstripe-shortcodable) opens the shortcode form dialog:
 
 ```JS
 openDialog: function() {
@@ -75,3 +75,6 @@ openDialog: function() {
         simpler.modal.bodyHtml = $('#xhr_buffer').html(data).html();
     });
 }
+
+## NOTES
+- Check [MutationObserver](https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver) (& [here](https://www.smashingmagazine.com/2019/04/mutationobserver-api-guide/)) to use instead of React transformer
