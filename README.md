@@ -51,7 +51,7 @@ document.addEventListener("DOMNodesInserted", function () {
 
 ## Opt-in extra JS requirement (~260kb), adds:
 - (global) Bootstrap js (mainly for modal, but all-included)
-- (global) $ & jQue**e**ry 3 (has to be slightly different indeed, as jquery is taken)
+- (global) $ & jQue**e**ry 3 (has to be slightly different indeed, as jquery is taken)<br>
   <img width="136" src="https://user-images.githubusercontent.com/1005986/122156443-4043b880-ce69-11eb-9659-efe9ad3f3f18.png">
 - even (global) VueJS 2 (I know, crazy!)
 
