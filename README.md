@@ -4,7 +4,7 @@ This module tries to make Silverstripe Admin interface development a bit simpler
 
 ## Added functionality, so far:
 - 'Synthetic' JS load/unload events (`DOMNodesInserted`/`DOMNodesRemoved`) for dynamic inserts/react components
-- Simple modal dialog (based on VueJS & Bootstrap)
+- Simple modal dialog (based on/requires additional loading of VueJS & Bootstrap)
 
 ### Extra JS
 - (global) Bootstrap js (mainly for modal, but all-included)

@@ -20,8 +20,6 @@ window.simpler = {
     }
 };
 
-
-
 //
 // Run early on to set some basics
 //
@@ -98,7 +96,7 @@ document.onreadystatechange = function () { // https://developer.mozilla.org/en-
 //
 document.addEventListener("DOMNodesInserted", function () {
     if (typeof FilePond !== "undefined") {
-        // initFilePond(); // has already been init'ed from filepond module...
+        // initFilePond(); // has already been init'ed from filepond module on DOMContentLoaded...
 
         // Attach filepond to all related inputs
         var anchors = document.querySelectorAll('input[type="file"].filepond');
