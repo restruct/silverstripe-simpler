@@ -4,13 +4,7 @@ This module tries to make Silverstripe Admin interface development a bit simpler
 
 ## Added functionality, so far:
 - 'Synthetic' JS load/unload events (`DOMNodesInserted`/`DOMNodesRemoved`) for dynamic inserts/react components
-- Simple modal dialog (based on/requires additional loading of VueJS & Bootstrap)
-
-### Extra JS
-- (global) Bootstrap js (mainly for modal, but all-included)
-- (global) $ & jQue**e**ry 3 (has to be slightly different indeed, as jquery is taken)  
-  <img width="136" src="https://user-images.githubusercontent.com/1005986/122156443-4043b880-ce69-11eb-9659-efe9ad3f3f18.png">
-- even (global) VueJS 2 (I know, crazy!)
+- (opt-in) Simple modal dialog (based on/requires additional loading of one JS file of ~260kb containing jQuery, VueJS & Bootstrap)
 
 ## JS event for dynamically inserted & removed DOM nodes, even react components
 (sort of what Entwine onmatch/onadd does, but without the polling and also working for react-rendered areas)
@@ -55,9 +49,28 @@ document.addEventListener("DOMNodesInserted", function () {
 });
 ```
 
+## Opt-in extra JS requirement (~260kb), adds:
+- (global) Bootstrap js (mainly for modal, but all-included)
+- (global) $ & jQue**e**ry 3 (has to be slightly different indeed, as jquery is taken)
+  <img width="136" src="https://user-images.githubusercontent.com/1005986/122156443-4043b880-ce69-11eb-9659-efe9ad3f3f18.png">
+- even (global) VueJS 2 (I know, crazy!)
+
 ## Modal dialog
 <img width="450" src="https://user-images.githubusercontent.com/1005986/122156433-3de15e80-ce69-11eb-9787-b4dd7d39f371.png"><br>
 Opening a simple modal dialog is a matter of setting some properties of the (again, global) `simpler` object.<br>
+
+The modal dialog requires loading an additional JS file (of currently ~250kb) which adds jQuery 3, Bootstrap JS and VueJs 2 to your project:
+
+```YML
+---
+Name: module_or_project
+---
+SilverStripe\Admin\LeftAndMain:
+  extra_requirements_javascript:
+    # Require simpler object & jQuery/BootstrapJS/VueJS from SimplerSilverstripe module
+    - 'restruct/silverstripe-simpler:client/dist/js/simpler-silverstripe.js'
+```
+
 Example of how the [Restruct Shortcodable module](https://github.com/restruct/silverstripe-shortcodable) opens the shortcode form dialog:
 
 ```JS
@@ -75,6 +88,7 @@ openDialog: function() {
         simpler.modal.bodyHtml = $('#xhr_buffer').html(data).html();
     });
 }
+```
 
 ## NOTES
-- Check [MutationObserver](https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver) (& [here](https://www.smashingmagazine.com/2019/04/mutationobserver-api-guide/)) to use instead of React transformer
+- Check [MutationObserver](https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver) (& [here](https://www.smashingmagazine.com/2019/04/mutationobserver-api-guide/)) to use instead of React transformer fo the for the `DOMNodesXXX` events

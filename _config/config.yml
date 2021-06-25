@@ -4,12 +4,5 @@ Name: simpler_silverstripe
 SilverStripe\Admin\LeftAndMain:
   extra_requirements_javascript:
     - 'restruct/silverstripe-simpler:client/dist/js/simpler-domevents.js'
-    - 'restruct/silverstripe-simpler:client/dist/js/simpler-silverstripe.js'
-#    - 'restruct/silverstripe-simpler:client/dist/js/vue-component.js'
-#    - 'restruct/silverstripe-simpler:client/dist/js/react-mountevents-emitter.js'
-  extra_requirements_css:
-    - 'restruct/silverstripe-simpler:client/dist/styles/simpler-silverstripe.css'
-
-#SilverStripe\ORM\DataObject:
-#  extensions:
-#    - Restruct\Silverstripe\Simpler\SimpleAdminExtension
+    ## jQuery/BootstrapJS/VueJS: to opt-in, include this JS requirement in your module/project config:
+#    - 'restruct/silverstripe-simpler:client/dist/js/simpler-silverstripe.js'
