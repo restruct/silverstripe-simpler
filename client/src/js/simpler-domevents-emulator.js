@@ -9,8 +9,8 @@ window.simpler_dom = {
     insertEventTimeout: null,
     emitInsert: function (type, element, delay, loadedUrl) {
         // Ignore non-admin fetch/xhr events
-        if(loadedUrl && typeof loadedUrl.indexOf==="function" && loadedUrl.indexOf('/'+ss.config.adminUrl)===-1){
-            console.log('emitInsert IGNORING loadedUrl: '+loadedUrl);
+        if(loadedUrl && loadedUrl.indexOf(ss.config.adminUrl) < 0){
+            // console.log('emitInsert IGNORING loadedUrl: "'+loadedUrl+'"');
             return;
         }
 
@@ -45,7 +45,7 @@ window.simpler_dom = {
 
 };
 
-// IE9+ polyfill...
+// IE9+ CustomEvent polyfill...
 (function () {
     if ( typeof window.CustomEvent === "function" ) return false;
     function CustomEvent ( event, params ) {

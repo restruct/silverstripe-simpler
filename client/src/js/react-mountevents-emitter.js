@@ -30,6 +30,7 @@ const FormWrapper = (Form) => (
         }
 
         render() {
+            // console.log('FORM RENDER...', this.browserDomEl, Date.now());
             return (
                 <Form {...this.props} />
             );
