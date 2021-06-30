@@ -91,24 +91,24 @@ document.onreadystatechange = function () { // https://developer.mozilla.org/en-
     }
 }
 
+// //
+// // FilePond module compatibility helper: init filepond also on dynamically inserted nodes (via the synthetic simpler DOM events)
+// //
+// document.addEventListener("DOMNodesInserted", function () {
+//     if (typeof FilePond !== "undefined") {
+//         // initFilePond(); // has already been init'ed from filepond module on DOMContentLoaded...
 //
-// FilePond module compatibility helper: init filepond also on dynamically inserted nodes (via the synthetic simpler DOM events)
-//
-document.addEventListener("DOMNodesInserted", function () {
-    if (typeof FilePond !== "undefined") {
-        // initFilePond(); // has already been init'ed from filepond module on DOMContentLoaded...
-
-        // Attach filepond to all related inputs
-        var anchors = document.querySelectorAll('input[type="file"].filepond');
-        for (var i = 0; i < anchors.length; i++) {
-            var el = anchors[i];
-            var pond = FilePond.create(el);
-            var config = JSON.parse(el.dataset.config);
-            for (var key in config) {
-                // We can set the properties directly in the instance
-                // @link https://pqina.nl/filepond/docs/patterns/api/filepond-instance/#properties
-                pond[key] = config[key];
-            }
-        }
-    }
-});
+//         // Attach filepond to all related inputs
+//         var anchors = document.querySelectorAll('input[type="file"].filepond');
+//         for (var i = 0; i < anchors.length; i++) {
+//             var el = anchors[i];
+//             var pond = FilePond.create(el);
+//             var config = JSON.parse(el.dataset.config);
+//             for (var key in config) {
+//                 // We can set the properties directly in the instance
+//                 // @link https://pqina.nl/filepond/docs/patterns/api/filepond-instance/#properties
+//                 pond[key] = config[key];
+//             }
+//         }
+//     }
+// });
