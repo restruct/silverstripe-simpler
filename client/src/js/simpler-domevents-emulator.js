@@ -9,27 +9,29 @@ window.simpler_dom = {
     insertEventTimeout: null,
     emitInsert: function (type, element, delay, loadedUrl) {
         // Ignore non-admin fetch/xhr events
-
         if(loadedUrl && typeof loadedUrl.indexOf==="function" && loadedUrl.indexOf('/'+ss.config.adminUrl)===-1){
+            console.log('emitInsert IGNORING loadedUrl: '+loadedUrl);
             return;
         }
-        // reset previous events still underway
-        if(window.simpler_dom.insertEventTimeout){
-            clearTimeout(window.simpler_dom.insertEventTimeout);
-        }
+
         // let event = new Event("DOMNodesInserted", { bubbles: true, cancelable: true, detail: { type: type.toUpperCase(), time: Date.now() } });
         let event = new CustomEvent("DOMNodesInserted", { bubbles: true, cancelable: true, detail: { type: type.toUpperCase(), time: Date.now() }});
         let eventDelay = (typeof delay !== 'undefined') ? delay : window.simpler_dom.insertEventDelay;
 
-        // 'gather' multiple triggers and emit (on the specific element of the last trigger, or on document)
+        // 'group' multiple triggers and emit (on the specific element of the last trigger, or on document)
         if(eventDelay && !element) {
+            // reset previous events/timeout still underway
+            if(window.simpler_dom.insertEventTimeout) {
+                clearTimeout(window.simpler_dom.insertEventTimeout);
+            }
+            // set new timeout
             window.simpler_dom.insertEventTimeout = setTimeout(function () {
                 // console.log('EMITTING (DELAY, document): DOMNodesInserted');
                 document.dispatchEvent(event);
             }, eventDelay);
 
+        // emit directly, on specific element (or body):
         } else {
-            // emit directly, on specific element (or body)
             // console.log('EMITTING (DIRECT, element): DOMNodesInserted', element);
             (element && typeof element.dispatchEvent === 'function') ? element.dispatchEvent(event) : document.dispatchEvent(event);
         }
@@ -78,7 +80,8 @@ window.simpler_dom = {
             //     console.log('::FETCH:: finished loading', input);
             //     simpler_dom.adminDOM_emit(input, 100);
             // });
-        simpler_dom.emitInsert('fetch', null, 200, input); // slightly longer delay because we're actually in front of the callbacks being executed in case of fetch
+        // slightly longer delay because we're actually in front of the callbacks being executed in case of fetch
+        simpler_dom.emitInsert('fetch', null, 200, input);
         // return response to original caller
         return response;
     }
