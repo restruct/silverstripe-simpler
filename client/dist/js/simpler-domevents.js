@@ -1,1 +1,450 @@
-(()=>{var t,e={757:(t,e,r)=>{t.exports=r(666)},96:(t,e,r)=>{"use strict";const n=React;var o=r.n(n);const i=ReactDom;var a=r.n(i);const c=Injector;function u(t){return(u="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}function s(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}function f(t,e){for(var r=0;r<e.length;r++){var n=e[r];n.enumerable=n.enumerable||!1,n.configurable=!0,"value"in n&&(n.writable=!0),Object.defineProperty(t,n.key,n)}}function l(t,e){return(l=Object.setPrototypeOf||function(t,e){return t.__proto__=e,t})(t,e)}function p(t){var e=function(){if("undefined"==typeof Reflect||!Reflect.construct)return!1;if(Reflect.construct.sham)return!1;if("function"==typeof Proxy)return!0;try{return Boolean.prototype.valueOf.call(Reflect.construct(Boolean,[],(function(){}))),!0}catch(t){return!1}}();return function(){var r,n=v(t);if(e){var o=v(this).constructor;r=Reflect.construct(n,arguments,o)}else r=n.apply(this,arguments);return h(this,r)}}function h(t,e){return!e||"object"!==u(e)&&"function"!=typeof e?function(t){if(void 0===t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return t}(t):e}function v(t){return(v=Object.setPrototypeOf?Object.getPrototypeOf:function(t){return t.__proto__||Object.getPrototypeOf(t)})(t)}var d=function(t){return function(e){!function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function");t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,writable:!0,configurable:!0}}),e&&l(t,e)}(u,e);var r,n,i,c=p(u);function u(){return s(this,u),c.apply(this,arguments)}return r=u,(n=[{key:"componentDidMount",value:function(){this.browserDomEl=a().findDOMNode(this),window.simpler_dom.emitInsert("mount",this.browserDomEl,0)}},{key:"componentWillUnmount",value:function(){window.simpler_dom.emitRemove("unmount",this.browserDomEl,0)}},{key:"render",value:function(){return o().createElement(t,this.props)}}])&&f(r.prototype,n),i&&f(r,i),u}(o().Component)};r.n(c)().transform("simpler-form-mount-emitter",(function(t){t.component("Form",d)}))},507:(t,e,r)=>{"use strict";var n=r(757),o=r.n(n);function i(t,e,r,n,o,i,a){try{var c=t[i](a),u=c.value}catch(t){return void r(t)}c.done?e(u):Promise.resolve(u).then(n,o)}window.simpler_dom={insertEventDelay:40,insertEventTimeout:null,emitInsert:function(t,e,r,n){if(!(n&&n.indexOf(ss.config.adminUrl)<0)){var o=new CustomEvent("DOMNodesInserted",{bubbles:!0,cancelable:!0,detail:{type:t.toUpperCase(),time:Date.now()}}),i=void 0!==r?r:window.simpler_dom.insertEventDelay;i&&!e?(window.simpler_dom.insertEventTimeout&&clearTimeout(window.simpler_dom.insertEventTimeout),window.simpler_dom.insertEventTimeout=setTimeout((function(){document.dispatchEvent(o)}),i)):e&&"function"==typeof e.dispatchEvent?e.dispatchEvent(o):document.dispatchEvent(o)}},emitRemove:function(t,e,r){var n=new CustomEvent("DOMNodesRemoved",{bubbles:!0,cancelable:!0,detail:{type:t.toUpperCase(),time:Date.now()}});e&&"function"==typeof e.dispatchEvent?e.dispatchEvent(n):document.dispatchEvent(n)}},function(){if("function"==typeof window.CustomEvent)return!1;window.CustomEvent=function(t,e){e=e||{bubbles:!1,cancelable:!1,detail:null};var r=document.createEvent("CustomEvent");return r.initCustomEvent(t,e.bubbles,e.cancelable,e.detail),r}}(),function(){var t=XMLHttpRequest.prototype.open;XMLHttpRequest.prototype.open=function(e,r){this.addEventListener("load",(function(){simpler_dom.emitInsert("xhr",null,100,r)})),t.apply(this,arguments)};var e=window.fetch;window.fetch=function(){var t,r=(t=o().mark((function t(r,n){var i;return o().wrap((function(t){for(;;)switch(t.prev=t.next){case 0:return t.next=2,e(r,n);case 2:return i=t.sent,simpler_dom.emitInsert("fetch",null,200,r),t.abrupt("return",i);case 5:case"end":return t.stop()}}),t)})),function(){var e=this,r=arguments;return new Promise((function(n,o){var a=t.apply(e,r);function c(t){i(a,n,o,c,u,"next",t)}function u(t){i(a,n,o,c,u,"throw",t)}c(void 0)}))});return function(t,e){return r.apply(this,arguments)}}(),document.addEventListener("DOMContentLoaded",(function(){simpler_dom.emitInsert("load",null,0)}))}()},933:()=>{},666:t=>{var e=function(t){"use strict";var e,r=Object.prototype,n=r.hasOwnProperty,o="function"==typeof Symbol?Symbol:{},i=o.iterator||"@@iterator",a=o.asyncIterator||"@@asyncIterator",c=o.toStringTag||"@@toStringTag";function u(t,e,r){return Object.defineProperty(t,e,{value:r,enumerable:!0,configurable:!0,writable:!0}),t[e]}try{u({},"")}catch(t){u=function(t,e,r){return t[e]=r}}function s(t,e,r,n){var o=e&&e.prototype instanceof m?e:m,i=Object.create(o.prototype),a=new P(n||[]);return i._invoke=function(t,e,r){var n=l;return function(o,i){if(n===h)throw new Error("Generator is already running");if(n===v){if("throw"===o)throw i;return C()}for(r.method=o,r.arg=i;;){var a=r.delegate;if(a){var c=L(a,r);if(c){if(c===d)continue;return c}}if("next"===r.method)r.sent=r._sent=r.arg;else if("throw"===r.method){if(n===l)throw n=v,r.arg;r.dispatchException(r.arg)}else"return"===r.method&&r.abrupt("return",r.arg);n=h;var u=f(t,e,r);if("normal"===u.type){if(n=r.done?v:p,u.arg===d)continue;return{value:u.arg,done:r.done}}"throw"===u.type&&(n=v,r.method="throw",r.arg=u.arg)}}}(t,r,a),i}function f(t,e,r){try{return{type:"normal",arg:t.call(e,r)}}catch(t){return{type:"throw",arg:t}}}t.wrap=s;var l="suspendedStart",p="suspendedYield",h="executing",v="completed",d={};function m(){}function y(){}function w(){}var b={};b[i]=function(){return this};var g=Object.getPrototypeOf,E=g&&g(g(R([])));E&&E!==r&&n.call(E,i)&&(b=E);var O=w.prototype=m.prototype=Object.create(b);function _(t){["next","throw","return"].forEach((function(e){u(t,e,(function(t){return this._invoke(e,t)}))}))}function x(t,e){function r(o,i,a,c){var u=f(t[o],t,i);if("throw"!==u.type){var s=u.arg,l=s.value;return l&&"object"==typeof l&&n.call(l,"__await")?e.resolve(l.__await).then((function(t){r("next",t,a,c)}),(function(t){r("throw",t,a,c)})):e.resolve(l).then((function(t){s.value=t,a(s)}),(function(t){return r("throw",t,a,c)}))}c(u.arg)}var o;this._invoke=function(t,n){function i(){return new e((function(e,o){r(t,n,e,o)}))}return o=o?o.then(i,i):i()}}function L(t,r){var n=t.iterator[r.method];if(n===e){if(r.delegate=null,"throw"===r.method){if(t.iterator.return&&(r.method="return",r.arg=e,L(t,r),"throw"===r.method))return d;r.method="throw",r.arg=new TypeError("The iterator does not provide a 'throw' method")}return d}var o=f(n,t.iterator,r.arg);if("throw"===o.type)return r.method="throw",r.arg=o.arg,r.delegate=null,d;var i=o.arg;return i?i.done?(r[t.resultName]=i.value,r.next=t.nextLoc,"return"!==r.method&&(r.method="next",r.arg=e),r.delegate=null,d):i:(r.method="throw",r.arg=new TypeError("iterator result is not an object"),r.delegate=null,d)}function j(t){var e={tryLoc:t[0]};1 in t&&(e.catchLoc=t[1]),2 in t&&(e.finallyLoc=t[2],e.afterLoc=t[3]),this.tryEntries.push(e)}function k(t){var e=t.completion||{};e.type="normal",delete e.arg,t.completion=e}function P(t){this.tryEntries=[{tryLoc:"root"}],t.forEach(j,this),this.reset(!0)}function R(t){if(t){var r=t[i];if(r)return r.call(t);if("function"==typeof t.next)return t;if(!isNaN(t.length)){var o=-1,a=function r(){for(;++o<t.length;)if(n.call(t,o))return r.value=t[o],r.done=!1,r;return r.value=e,r.done=!0,r};return a.next=a}}return{next:C}}function C(){return{value:e,done:!0}}return y.prototype=O.constructor=w,w.constructor=y,y.displayName=u(w,c,"GeneratorFunction"),t.isGeneratorFunction=function(t){var e="function"==typeof t&&t.constructor;return!!e&&(e===y||"GeneratorFunction"===(e.displayName||e.name))},t.mark=function(t){return Object.setPrototypeOf?Object.setPrototypeOf(t,w):(t.__proto__=w,u(t,c,"GeneratorFunction")),t.prototype=Object.create(O),t},t.awrap=function(t){return{__await:t}},_(x.prototype),x.prototype[a]=function(){return this},t.AsyncIterator=x,t.async=function(e,r,n,o,i){void 0===i&&(i=Promise);var a=new x(s(e,r,n,o),i);return t.isGeneratorFunction(r)?a:a.next().then((function(t){return t.done?t.value:a.next()}))},_(O),u(O,c,"Generator"),O[i]=function(){return this},O.toString=function(){return"[object Generator]"},t.keys=function(t){var e=[];for(var r in t)e.push(r);return e.reverse(),function r(){for(;e.length;){var n=e.pop();if(n in t)return r.value=n,r.done=!1,r}return r.done=!0,r}},t.values=R,P.prototype={constructor:P,reset:function(t){if(this.prev=0,this.next=0,this.sent=this._sent=e,this.done=!1,this.delegate=null,this.method="next",this.arg=e,this.tryEntries.forEach(k),!t)for(var r in this)"t"===r.charAt(0)&&n.call(this,r)&&!isNaN(+r.slice(1))&&(this[r]=e)},stop:function(){this.done=!0;var t=this.tryEntries[0].completion;if("throw"===t.type)throw t.arg;return this.rval},dispatchException:function(t){if(this.done)throw t;var r=this;function o(n,o){return c.type="throw",c.arg=t,r.next=n,o&&(r.method="next",r.arg=e),!!o}for(var i=this.tryEntries.length-1;i>=0;--i){var a=this.tryEntries[i],c=a.completion;if("root"===a.tryLoc)return o("end");if(a.tryLoc<=this.prev){var u=n.call(a,"catchLoc"),s=n.call(a,"finallyLoc");if(u&&s){if(this.prev<a.catchLoc)return o(a.catchLoc,!0);if(this.prev<a.finallyLoc)return o(a.finallyLoc)}else if(u){if(this.prev<a.catchLoc)return o(a.catchLoc,!0)}else{if(!s)throw new Error("try statement without catch or finally");if(this.prev<a.finallyLoc)return o(a.finallyLoc)}}}},abrupt:function(t,e){for(var r=this.tryEntries.length-1;r>=0;--r){var o=this.tryEntries[r];if(o.tryLoc<=this.prev&&n.call(o,"finallyLoc")&&this.prev<o.finallyLoc){var i=o;break}}i&&("break"===t||"continue"===t)&&i.tryLoc<=e&&e<=i.finallyLoc&&(i=null);var a=i?i.completion:{};return a.type=t,a.arg=e,i?(this.method="next",this.next=i.finallyLoc,d):this.complete(a)},complete:function(t,e){if("throw"===t.type)throw t.arg;return"break"===t.type||"continue"===t.type?this.next=t.arg:"return"===t.type?(this.rval=this.arg=t.arg,this.method="return",this.next="end"):"normal"===t.type&&e&&(this.next=e),d},finish:function(t){for(var e=this.tryEntries.length-1;e>=0;--e){var r=this.tryEntries[e];if(r.finallyLoc===t)return this.complete(r.completion,r.afterLoc),k(r),d}},catch:function(t){for(var e=this.tryEntries.length-1;e>=0;--e){var r=this.tryEntries[e];if(r.tryLoc===t){var n=r.completion;if("throw"===n.type){var o=n.arg;k(r)}return o}}throw new Error("illegal catch attempt")},delegateYield:function(t,r,n){return this.delegate={iterator:R(t),resultName:r,nextLoc:n},"next"===this.method&&(this.arg=e),d}},t}(t.exports);try{regeneratorRuntime=e}catch(t){Function("r","regeneratorRuntime = r")(e)}}},r={};function n(t){var o=r[t];if(void 0!==o)return o.exports;var i=r[t]={exports:{}};return e[t](i,i.exports,n),i.exports}n.m=e,t=[],n.O=(e,r,o,i)=>{if(!r){var a=1/0;for(s=0;s<t.length;s++){for(var[r,o,i]=t[s],c=!0,u=0;u<r.length;u++)(!1&i||a>=i)&&Object.keys(n.O).every((t=>n.O[t](r[u])))?r.splice(u--,1):(c=!1,i<a&&(a=i));c&&(t.splice(s--,1),e=o())}return e}i=i||0;for(var s=t.length;s>0&&t[s-1][2]>i;s--)t[s]=t[s-1];t[s]=[r,o,i]},n.n=t=>{var e=t&&t.__esModule?()=>t.default:()=>t;return n.d(e,{a:e}),e},n.d=(t,e)=>{for(var r in e)n.o(e,r)&&!n.o(t,r)&&Object.defineProperty(t,r,{enumerable:!0,get:e[r]})},n.o=(t,e)=>Object.prototype.hasOwnProperty.call(t,e),(()=>{var t={295:0,134:0};n.O.j=e=>0===t[e];var e=(e,r)=>{var o,i,[a,c,u]=r,s=0;for(o in c)n.o(c,o)&&(n.m[o]=c[o]);if(u)var f=u(n);for(e&&e(r);s<a.length;s++)i=a[s],n.o(t,i)&&t[i]&&t[i][0](),t[a[s]]=0;return n.O(f)},r=self.webpackChunksimpler_silverstripe_package_json=self.webpackChunksimpler_silverstripe_package_json||[];r.forEach(e.bind(null,0)),r.push=e.bind(null,r.push.bind(r))})(),n.O(void 0,[134],(()=>n(507))),n.O(void 0,[134],(()=>n(96)));var o=n.O(void 0,[134],(()=>n(933)));o=n.O(o)})();
+/******/ (() => { // webpackBootstrap
+/******/ 	var __webpack_modules__ = ({
+
+/***/ "./client/src/js/react-mountevents-emitter.js":
+/*!****************************************************!*\
+  !*** ./client/src/js/react-mountevents-emitter.js ***!
+  \****************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "react");
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var react_dom__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react-dom */ "react-dom");
+/* harmony import */ var react_dom__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(react_dom__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var lib_Injector__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! lib/Injector */ "lib/Injector");
+/* harmony import */ var lib_Injector__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(lib_Injector__WEBPACK_IMPORTED_MODULE_2__);
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function _createSuperInternal() { var Super = _getPrototypeOf(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
+
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); return true; } catch (e) { return false; } }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+// Quite OK ref: https://docs.silverstripe.org/en/4/developer_guides/customising_the_admin_interface/reactjs_redux_and_graphql/#building-an-extensible-graphql-app
+// And: https://docs.silverstripe.org/en/4/developer_guides/customising_the_admin_interface/reactjs_redux_and_graphql/#notes-app
+// And: https://reactjs.org/docs/state-and-lifecycle.html
+
+
+ // react 'component' as function
+// const FormWrapper = (Form) => (props) => {
+//     window.simpler_dom.adminDOM_emit();
+//     console.log('FORM EMITTING...');
+//     return (
+//         <Form {...props} />
+//     );
+// }
+// react 'component' as class
+
+var FormWrapper = function FormWrapper(Form) {
+  return (
+    /*#__PURE__*/
+    // https://github.com/silverstripe/silverstripe-admin/blob/1/client/src/components/Form/Form.js
+    function (_React$Component) {
+      _inherits(FormWrapperItem, _React$Component);
+
+      var _super = _createSuper(FormWrapperItem);
+
+      function FormWrapperItem() {
+        _classCallCheck(this, FormWrapperItem);
+
+        return _super.apply(this, arguments);
+      }
+
+      _createClass(FormWrapperItem, [{
+        key: "componentDidMount",
+        value: function componentDidMount() {
+          this.browserDomEl = react_dom__WEBPACK_IMPORTED_MODULE_1___default().findDOMNode(this); // console.log('FORM MOUNT - EMITTING...', this.browserDomEl, Date.now());
+
+          window.simpler_dom.emitInsert('mount', this.browserDomEl, 0);
+        }
+      }, {
+        key: "componentWillUnmount",
+        value: function componentWillUnmount() {
+          // console.log('FORM UNMOUNT - EMITTING...', this.browserDomEl, Date.now());
+          window.simpler_dom.emitRemove('unmount', this.browserDomEl, 0);
+        }
+      }, {
+        key: "render",
+        value: function render() {
+          // console.log('FORM RENDER...', this.browserDomEl, Date.now());
+          return /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement(Form, this.props);
+        }
+      }]);
+
+      return FormWrapperItem;
+    }((react__WEBPACK_IMPORTED_MODULE_0___default().Component))
+  );
+}; // Register this 'transformation' on the original Silverstripe Form 'component'
+
+
+lib_Injector__WEBPACK_IMPORTED_MODULE_2___default().transform('simpler-form-mount-emitter', function (updater) {
+  updater.component('Form', FormWrapper);
+});
+
+/***/ }),
+
+/***/ "./client/src/js/simpler-domevents-emulator.js":
+/*!*****************************************************!*\
+  !*** ./client/src/js/simpler-domevents-emulator.js ***!
+  \*****************************************************/
+/***/ (() => {
+
+//
+// 'Emulate' DOMContentLoaded events (named to DOMNodesInserted & DOMNodesRemoved) to init various JS listeners on ajax-inserted/react rendered DOMs
+// event.detail.type values: LOAD (DOMContenLoaded), XHR (XHR requests to /admin), FETCH (requests to /admin), MOUNT/UNMOUNT (react component)
+//
+window.simpler_dom = {
+  // Emit AdminContentChanged event only once per multiple triggers within 40ms
+  insertEventDelay: 40,
+  insertEventTimeout: null,
+  emitInsert: function emitInsert(type, element, delay, loadedUrl) {
+    // Ignore non-admin fetch/xhr events
+    if (loadedUrl && loadedUrl.indexOf(ss.config.adminUrl) < 0) {
+      // console.log('emitInsert IGNORING loadedUrl: "'+loadedUrl+'"');
+      return;
+    } // let event = new Event("DOMNodesInserted", { bubbles: true, cancelable: true, detail: { type: type.toUpperCase(), time: Date.now() } });
+
+
+    var event = new CustomEvent("DOMNodesInserted", {
+      bubbles: true,
+      cancelable: true,
+      detail: {
+        type: type.toUpperCase(),
+        time: Date.now()
+      }
+    });
+    var eventDelay = typeof delay !== 'undefined' ? delay : window.simpler_dom.insertEventDelay; // 'group' multiple triggers and emit (on the specific element of the last trigger, or on document)
+
+    if (eventDelay && !element) {
+      // reset previous events/timeout still underway
+      if (window.simpler_dom.insertEventTimeout) {
+        clearTimeout(window.simpler_dom.insertEventTimeout);
+      } // set new timeout
+
+
+      window.simpler_dom.insertEventTimeout = setTimeout(function () {
+        // console.log('EMITTING (DELAY, document): DOMNodesInserted');
+        document.dispatchEvent(event);
+      }, eventDelay); // emit directly, on specific element (or body):
+    } else {
+      // console.log('EMITTING (DIRECT, element): DOMNodesInserted', element);
+      element && typeof element.dispatchEvent === 'function' ? element.dispatchEvent(event) : document.dispatchEvent(event);
+    }
+  },
+  emitRemove: function emitRemove(type, element, delay) {
+    // let event = new Event("DOMNodesRemoved", { bubbles: true, cancelable: true, detail: { type: type.toUpperCase(), time: Date.now() } });
+    var event = new CustomEvent("DOMNodesRemoved", {
+      bubbles: true,
+      cancelable: true,
+      detail: {
+        type: type.toUpperCase(),
+        time: Date.now()
+      }
+    });
+    element && typeof element.dispatchEvent === 'function' ? element.dispatchEvent(event) : document.dispatchEvent(event);
+  }
+}; // IE9+ CustomEvent polyfill...
+
+(function () {
+  if (typeof window.CustomEvent === "function") return false;
+
+  function CustomEvent(event, params) {
+    params = params || {
+      bubbles: false,
+      cancelable: false,
+      detail: null
+    };
+    var evt = document.createEvent('CustomEvent');
+    evt.initCustomEvent(event, params.bubbles, params.cancelable, params.detail);
+    return evt;
+  }
+
+  window.CustomEvent = CustomEvent;
+})(); // Actually trigger some AdminDOMChanged events every now & then...
+
+
+(function () {
+  // // Dispatch events on XHR requests to allow hooking into as if regular DOMContentLoaded events were triggered
+  // var origOpen = XMLHttpRequest.prototype.open;
+  // XMLHttpRequest.prototype.open = function(method, url) {
+  //     this.addEventListener('load', function() {
+  //         // console.log('::XHR:: finished loading (admin)', method, url);
+  //         simpler_dom.emitInsert('xhr', null, 100, url); // allow for 100ms DOM rendering time
+  //     });
+  //     // run original open callback & listeners
+  //     origOpen.apply(this, arguments);
+  // };
+  // // jQuery XHR (not used much in CMS/Admin)
+  // $( document ).ajaxComplete(function() {
+  //     console.log('ajaxComplete');
+  //     simpler_dom.emitInsert('xhr', null, 100, url); // allow for 100ms DOM rendering time
+  // });
+  // Use mutationobserver instead
+  var observer = new MutationObserver(function (mutations) {
+    simpler_dom.emitInsert('mutation', null, 100); // batch at 100ms
+  });
+  observer.observe(document, {
+    childList: true,
+    subtree: true
+  }); // // Try & do the same for Fetch requests (dispatch 'DOMContentLoaded' events, sadly doesn't catch *every* fetch request...)
+  // const nativeFetch = window.fetch
+  // window.fetch = async (input, options) => {
+  //     // Set custom async handler
+  //     let response = await nativeFetch(input, options);
+  //         // .then(data => {
+  //         //     console.log('::FETCH:: finished loading', input);
+  //         //     simpler_dom.adminDOM_emit(input, 100);
+  //         // });
+  //     // slightly longer delay because we're actually in front of the callbacks being executed in case of fetch
+  //     simpler_dom.emitInsert('fetch', null, 200, input);
+  //     // return response to original caller
+  //     return response;
+  // }
+  // // Fallback: event listener for clicks on buttons (poor solution but couldn't find a solid way to hook into *every* Fetch
+  // document.addEventListener('click', function(e) {
+  //     // loop parent nodes from the target to the delegation node
+  //     for (var target = e.target; target && target !== this; target = target.parentNode) {
+  //         if (target.matches('button, .btn')) {
+  //             console.log('::BTN:: clicked');
+  //             simpler_dom.emitInsert('btnclick');
+  //             break;
+  //         }
+  //     }
+  // }, false);
+  // Dispatch an initial event on DOMContentLoaded;
+
+  document.addEventListener('DOMContentLoaded', function () {
+    simpler_dom.emitInsert('load', null, 0);
+  });
+})();
+
+/***/ }),
+
+/***/ "./client/src/styles/simpler-silverstripe.scss":
+/*!*****************************************************!*\
+  !*** ./client/src/styles/simpler-silverstripe.scss ***!
+  \*****************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+// extracted by mini-css-extract-plugin
+
+
+/***/ }),
+
+/***/ "lib/Injector":
+/*!***************************!*\
+  !*** external "Injector" ***!
+  \***************************/
+/***/ ((module) => {
+
+"use strict";
+module.exports = Injector;
+
+/***/ }),
+
+/***/ "react":
+/*!************************!*\
+  !*** external "React" ***!
+  \************************/
+/***/ ((module) => {
+
+"use strict";
+module.exports = React;
+
+/***/ }),
+
+/***/ "react-dom":
+/*!***************************!*\
+  !*** external "ReactDom" ***!
+  \***************************/
+/***/ ((module) => {
+
+"use strict";
+module.exports = ReactDom;
+
+/***/ })
+
+/******/ 	});
+/************************************************************************/
+/******/ 	// The module cache
+/******/ 	var __webpack_module_cache__ = {};
+/******/ 	
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/ 		// Check if module is in cache
+/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
+/******/ 		if (cachedModule !== undefined) {
+/******/ 			return cachedModule.exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = __webpack_module_cache__[moduleId] = {
+/******/ 			// no module.id needed
+/******/ 			// no module.loaded needed
+/******/ 			exports: {}
+/******/ 		};
+/******/ 	
+/******/ 		// Execute the module function
+/******/ 		__webpack_modules__[moduleId](module, module.exports, __webpack_require__);
+/******/ 	
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/ 	
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = __webpack_modules__;
+/******/ 	
+/************************************************************************/
+/******/ 	/* webpack/runtime/chunk loaded */
+/******/ 	(() => {
+/******/ 		var deferred = [];
+/******/ 		__webpack_require__.O = (result, chunkIds, fn, priority) => {
+/******/ 			if(chunkIds) {
+/******/ 				priority = priority || 0;
+/******/ 				for(var i = deferred.length; i > 0 && deferred[i - 1][2] > priority; i--) deferred[i] = deferred[i - 1];
+/******/ 				deferred[i] = [chunkIds, fn, priority];
+/******/ 				return;
+/******/ 			}
+/******/ 			var notFulfilled = Infinity;
+/******/ 			for (var i = 0; i < deferred.length; i++) {
+/******/ 				var [chunkIds, fn, priority] = deferred[i];
+/******/ 				var fulfilled = true;
+/******/ 				for (var j = 0; j < chunkIds.length; j++) {
+/******/ 					if ((priority & 1 === 0 || notFulfilled >= priority) && Object.keys(__webpack_require__.O).every((key) => (__webpack_require__.O[key](chunkIds[j])))) {
+/******/ 						chunkIds.splice(j--, 1);
+/******/ 					} else {
+/******/ 						fulfilled = false;
+/******/ 						if(priority < notFulfilled) notFulfilled = priority;
+/******/ 					}
+/******/ 				}
+/******/ 				if(fulfilled) {
+/******/ 					deferred.splice(i--, 1)
+/******/ 					result = fn();
+/******/ 				}
+/******/ 			}
+/******/ 			return result;
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/compat get default export */
+/******/ 	(() => {
+/******/ 		// getDefaultExport function for compatibility with non-harmony modules
+/******/ 		__webpack_require__.n = (module) => {
+/******/ 			var getter = module && module.__esModule ?
+/******/ 				() => (module['default']) :
+/******/ 				() => (module);
+/******/ 			__webpack_require__.d(getter, { a: getter });
+/******/ 			return getter;
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/define property getters */
+/******/ 	(() => {
+/******/ 		// define getter functions for harmony exports
+/******/ 		__webpack_require__.d = (exports, definition) => {
+/******/ 			for(var key in definition) {
+/******/ 				if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
+/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 				}
+/******/ 			}
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
+/******/ 	(() => {
+/******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/make namespace object */
+/******/ 	(() => {
+/******/ 		// define __esModule on exports
+/******/ 		__webpack_require__.r = (exports) => {
+/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 			}
+/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/jsonp chunk loading */
+/******/ 	(() => {
+/******/ 		// no baseURI
+/******/ 		
+/******/ 		// object to store loaded and loading chunks
+/******/ 		// undefined = chunk not loaded, null = chunk preloaded/prefetched
+/******/ 		// [resolve, reject, Promise] = chunk loading, 0 = chunk loaded
+/******/ 		var installedChunks = {
+/******/ 			"/js/simpler-domevents": 0,
+/******/ 			"styles/simpler-silverstripe": 0
+/******/ 		};
+/******/ 		
+/******/ 		// no chunk on demand loading
+/******/ 		
+/******/ 		// no prefetching
+/******/ 		
+/******/ 		// no preloaded
+/******/ 		
+/******/ 		// no HMR
+/******/ 		
+/******/ 		// no HMR manifest
+/******/ 		
+/******/ 		__webpack_require__.O.j = (chunkId) => (installedChunks[chunkId] === 0);
+/******/ 		
+/******/ 		// install a JSONP callback for chunk loading
+/******/ 		var webpackJsonpCallback = (parentChunkLoadingFunction, data) => {
+/******/ 			var [chunkIds, moreModules, runtime] = data;
+/******/ 			// add "moreModules" to the modules object,
+/******/ 			// then flag all "chunkIds" as loaded and fire callback
+/******/ 			var moduleId, chunkId, i = 0;
+/******/ 			for(moduleId in moreModules) {
+/******/ 				if(__webpack_require__.o(moreModules, moduleId)) {
+/******/ 					__webpack_require__.m[moduleId] = moreModules[moduleId];
+/******/ 				}
+/******/ 			}
+/******/ 			if(runtime) var result = runtime(__webpack_require__);
+/******/ 			if(parentChunkLoadingFunction) parentChunkLoadingFunction(data);
+/******/ 			for(;i < chunkIds.length; i++) {
+/******/ 				chunkId = chunkIds[i];
+/******/ 				if(__webpack_require__.o(installedChunks, chunkId) && installedChunks[chunkId]) {
+/******/ 					installedChunks[chunkId][0]();
+/******/ 				}
+/******/ 				installedChunks[chunkIds[i]] = 0;
+/******/ 			}
+/******/ 			return __webpack_require__.O(result);
+/******/ 		}
+/******/ 		
+/******/ 		var chunkLoadingGlobal = self["webpackChunksimpler_silverstripe_package_json"] = self["webpackChunksimpler_silverstripe_package_json"] || [];
+/******/ 		chunkLoadingGlobal.forEach(webpackJsonpCallback.bind(null, 0));
+/******/ 		chunkLoadingGlobal.push = webpackJsonpCallback.bind(null, chunkLoadingGlobal.push.bind(chunkLoadingGlobal));
+/******/ 	})();
+/******/ 	
+/************************************************************************/
+/******/ 	
+/******/ 	// startup
+/******/ 	// Load entry module and return exports
+/******/ 	// This entry module depends on other loaded chunks and execution need to be delayed
+/******/ 	__webpack_require__.O(undefined, ["styles/simpler-silverstripe"], () => (__webpack_require__("./client/src/js/simpler-domevents-emulator.js")))
+/******/ 	__webpack_require__.O(undefined, ["styles/simpler-silverstripe"], () => (__webpack_require__("./client/src/js/react-mountevents-emitter.js")))
+/******/ 	var __webpack_exports__ = __webpack_require__.O(undefined, ["styles/simpler-silverstripe"], () => (__webpack_require__("./client/src/styles/simpler-silverstripe.scss")))
+/******/ 	__webpack_exports__ = __webpack_require__.O(__webpack_exports__);
+/******/ 	
+/******/ })()
+;

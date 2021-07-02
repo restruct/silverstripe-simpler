@@ -60,31 +60,46 @@ window.simpler_dom = {
 // Actually trigger some AdminDOMChanged events every now & then...
 (function() {
 
-    // Dispatch events on XHR requests to allow hooking into as if regular DOMContentLoaded events were triggered
-    var origOpen = XMLHttpRequest.prototype.open;
-    XMLHttpRequest.prototype.open = function(method, url) {
-        this.addEventListener('load', function() {
-            // console.log('::XHR:: finished loading (admin)', method, url);
-            simpler_dom.emitInsert('xhr', null, 100, url); // allow for 100ms DOM rendering time
-        });
-        // run original open callback & listeners
-        origOpen.apply(this, arguments);
-    };
+    // // Dispatch events on XHR requests to allow hooking into as if regular DOMContentLoaded events were triggered
+    // var origOpen = XMLHttpRequest.prototype.open;
+    // XMLHttpRequest.prototype.open = function(method, url) {
+    //     this.addEventListener('load', function() {
+    //         // console.log('::XHR:: finished loading (admin)', method, url);
+    //         simpler_dom.emitInsert('xhr', null, 100, url); // allow for 100ms DOM rendering time
+    //     });
+    //     // run original open callback & listeners
+    //     origOpen.apply(this, arguments);
+    // };
 
-    // Try & do the same for Fetch requests (dispatch 'DOMContentLoaded' events, sadly doesn't catch *every* fetch request...)
-    const nativeFetch = window.fetch
-    window.fetch = async (input, options) => {
-        // Set custom async handler
-        let response = await nativeFetch(input, options);
-            // .then(data => {
-            //     console.log('::FETCH:: finished loading', input);
-            //     simpler_dom.adminDOM_emit(input, 100);
-            // });
-        // slightly longer delay because we're actually in front of the callbacks being executed in case of fetch
-        simpler_dom.emitInsert('fetch', null, 200, input);
-        // return response to original caller
-        return response;
-    }
+    // // jQuery XHR (not used much in CMS/Admin)
+    // $( document ).ajaxComplete(function() {
+    //     console.log('ajaxComplete');
+    //     simpler_dom.emitInsert('xhr', null, 100, url); // allow for 100ms DOM rendering time
+    // });
+
+    // Use mutationobserver instead
+    let observer = new MutationObserver(function (mutations){
+        simpler_dom.emitInsert('mutation', null, 100); // batch at 100ms
+    });
+    observer.observe(document, {
+        childList: true,
+        subtree: true
+    });
+
+    // // Try & do the same for Fetch requests (dispatch 'DOMContentLoaded' events, sadly doesn't catch *every* fetch request...)
+    // const nativeFetch = window.fetch
+    // window.fetch = async (input, options) => {
+    //     // Set custom async handler
+    //     let response = await nativeFetch(input, options);
+    //         // .then(data => {
+    //         //     console.log('::FETCH:: finished loading', input);
+    //         //     simpler_dom.adminDOM_emit(input, 100);
+    //         // });
+    //     // slightly longer delay because we're actually in front of the callbacks being executed in case of fetch
+    //     simpler_dom.emitInsert('fetch', null, 200, input);
+    //     // return response to original caller
+    //     return response;
+    // }
 
     // // Fallback: event listener for clicks on buttons (poor solution but couldn't find a solid way to hook into *every* Fetch
     // document.addEventListener('click', function(e) {
