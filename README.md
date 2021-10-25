@@ -5,6 +5,7 @@ This module tries to make Silverstripe Admin interface development a bit simpler
 ## Added functionality, so far:
 - 'Synthetic' JS load/unload events (`DOMNodesInserted`/`DOMNodesRemoved`) for dynamic inserts/react components
 - (opt-in) Simple modal dialog (based on/requires additional loading of one JS file of ~260kb containing jQuery, VueJS & Bootstrap)
+- Static Session::get etc accessors (just `require Restruct\Silverstripe\Simpler\Session`) instead of changing everything to $this->getRequest()->getSession()->etc
 
 ## JS event for dynamically inserted & removed DOM nodes, even react components
 (sort of what Entwine onmatch/onadd does, but without the polling and also working for react-rendered areas)
