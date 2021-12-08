@@ -1,2 +1,10 @@
-// Import stuff...
+@charset "UTF-8";
 //@import '~bootstrap/dist/css/bootstrap.css';
+
+#simpleAdminModalBody {
+  padding-bottom: 0;
+
+  .btn-toolbar {
+    margin-bottom: 0;
+  }
+}

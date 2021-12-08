@@ -2,6 +2,8 @@
 Name: simpler_silverstripe
 ---
 SilverStripe\Admin\LeftAndMain:
+  extra_requirements_css:
+    - 'restruct/silverstripe-simpler:client/dist/styles/simpler-silverstripe.css'
   extra_requirements_javascript:
     - 'restruct/silverstripe-simpler:client/dist/js/simpler-domevents.js'
     ## jQuery/BootstrapJS/VueJS: to opt-in, include this JS requirement in your module/project config:
