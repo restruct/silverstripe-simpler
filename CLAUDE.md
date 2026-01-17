@@ -53,20 +53,19 @@ a-simpler/
 │   └── Session.php                 # Static session accessor class
 ├── templates/
 │   ├── Includes/
-│   │   ├── SimplerAdminItems.ss    # XHR buffer template + modal include
-│   │   └── SimplerAdminModal.ss    # Vue-controlled Bootstrap 4 modal
+│   │   └── SimplerAdminItems.ss    # XHR buffer template
 │   └── SilverStripe/Admin/Includes/
 │       └── CMSLoadingScreen.ss     # Template override to include SimplerAdminItems
 ├── client/
 │   ├── src/js/
 │   │   ├── simpler-domevents-emulator.js   # window.simpler_dom + MutationObserver
 │   │   ├── react-mountevents-emitter.js    # Injector transform for Form component
-│   │   └── simpler-silverstripe.js         # Vue + BS4 modal plugin + global aliases
+│   │   └── simpler-silverstripe.js         # Vue + BS4 modal (self-contained, no SS template)
 │   ├── src/styles/
 │   │   └── simpler-silverstripe.scss
 │   └── dist/js/
 │       ├── simpler-domevents.js            # Auto-loaded (combined emulator + react)
-│       └── simpler-silverstripe.js         # Opt-in bundle (~443kb)
+│       └── simpler-silverstripe.js         # Opt-in bundle (~445kb)
 ├── webpack.mix.js
 └── package.json
 ```
@@ -175,6 +174,7 @@ yarn run production # Production build
 - **jQuery** is framework-provided (external), we alias it to `$` and `window.$`
 - **Bootstrap 4 modal plugin** is bundled (Reactstrap doesn't include jQuery plugins)
 - **Vue 2.6** is bundled for reactive modal data binding
+- **Modal is self-contained in JS** - Vue renders it with explicit template, no SS template needed
 - Uses SilverStripe webpack externals for React, ReactDOM, Injector compatibility
 
 ## Known Issues

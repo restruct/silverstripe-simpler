@@ -51,12 +51,36 @@ window.simpler = {
 //
 document.addEventListener('DOMContentLoaded', () => {
 
-    var modalEl = document.getElementById('simplerAdminModal');
+    // Create modal container (no SS template needed - Vue renders the modal)
+    var container = document.createElement('div');
+    container.id = 'simplerAdminModalContainer';
+    document.body.appendChild(container);
 
     // Bootstrap Modal (Vue rendered): to test opening a simple modal, paste into console: simpler.modal.show = true;
     var simpleModal = new Vue({
-        el: '#simplerAdminModal',
+        el: '#simplerAdminModalContainer',
         data: simpler.modal,
+        // Explicit template (Bootstrap 4 markup)
+        template: `
+            <div class="modal fade" id="simplerAdminModal"
+                 tabindex="-1" aria-labelledby="simpleAdminModalTitle" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="simpleAdminModalTitle">{{ title }}</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body" id="simpleAdminModalBody" v-html="bodyHtml"></div>
+                        <div class="modal-footer">
+                            <button v-if="closeBtn" type="button" class="btn btn-outline-secondary" data-dismiss="modal">{{ closeTxt }}</button>
+                            <button v-if="saveBtn" type="button" class="btn btn-primary font-icon-tick" id="simpleAdminModalPrimaryBtn">{{ saveTxt }}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `,
         watch: {
             // make modal open/closable by changing data value (Bootstrap 4 jQuery plugin)
             show: function (val) {
@@ -65,18 +89,18 @@ document.addEventListener('DOMContentLoaded', () => {
             bodyHtml: function (val) {
                 $('#simplerAdminModal').modal('handleUpdate');
             }
+        },
+        mounted: function () {
+            // Sync Bootstrap modal events back to Vue data
+            var self = this;
+            $('#simplerAdminModal').on('show.bs.modal', function () {
+                simpler.modal.show = true;
+            });
+            $('#simplerAdminModal').on('hide.bs.modal', function () {
+                simpler.modal.show = false;
+            });
         }
     });
-
-    // Sync Bootstrap modal events back to Vue data
-    if (modalEl) {
-        $(modalEl).on('show.bs.modal', function () {
-            simpler.modal.show = true;
-        });
-        $(modalEl).on('hide.bs.modal', function () {
-            simpler.modal.show = false;
-        });
-    }
 
 });
 
