@@ -41,7 +41,7 @@ mix.webpackConfig({
         'graphql-tag': 'GraphQLTag',
         'isomorphic-fetch': 'IsomorphicFetch',
         i18n: 'i18n',
-//        jquery: 'jQuery',
+        jquery: 'jQuery', // Use framework's jQuery instead of bundling our own
         merge: 'merge',
         'page.js': 'Page',
         'react-dom/test-utils': 'ReactAddonsTestUtils',
