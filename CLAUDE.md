@@ -2,196 +2,230 @@
 
 **Package:** `restruct/silverstripe-simpler`
 **Namespace:** `Restruct\Silverstripe\Simpler`
-**Current Tag:** `0.1.9` (SS5 compatible - main branch is for SS6)
+**Branch:** `ss5` (SilverStripe 5 compatible)
 
 ## Purpose
 
 Makes SilverStripe Admin development simpler by re-introducing traditional basics:
 
-1. **Synthetic DOM Events** - `DOMNodesInserted`/`DOMNodesRemoved` for JS initialization on dynamic content
+1. **Synthetic DOM Events** (always loaded) - `DOMNodesInserted`/`DOMNodesRemoved` for JS initialization on dynamic content
 2. **Modal Dialog** (opt-in) - Bootstrap 4 modal via global `simpler.modal` object
-3. **Static Session Helpers** - `Session::get()`/`set()` instead of `$this->getRequest()->getSession()->get()`
-
-## What SilverStripe Admin Provides
-
-SilverStripe Admin bundles several JS libraries, but understanding what's available vs what's missing is important:
-
-### Available (via webpack externals)
-
-| Library | Global | Notes |
-|---------|--------|-------|
-| **jQuery 3** | `jQuery` | Core library, NOT aliased to `$` by default |
-| **React/ReactDOM** | `React`, `ReactDom` | Core React libraries |
-| **Redux** | `Redux`, `ReactRedux` | State management |
-| **Reactstrap** | `Reactstrap` | Bootstrap 4 **React components** (see below) |
-| **Injector** | `Injector` | SilverStripe's dependency injection for React |
-| **moment.js** | `moment` | Date/time handling |
-
-See full list: [silverstripe/webpack-config externals.js](https://github.com/silverstripe/webpack-config/blob/master/js/externals.js)
-
-### What is Reactstrap?
-
-**Reactstrap is NOT regular Bootstrap.** It's Bootstrap 4 rebuilt as pure React components:
-- Provides Bootstrap 4 **CSS styling** (the look)
-- Provides Bootstrap components as **React components** (`<Modal>`, `<Button>`, etc.)
-- Does **NOT** provide Bootstrap's **jQuery plugins** (`.modal()`, `.collapse()`, etc.)
-
-This means traditional Bootstrap JS like `$('#myModal').modal('show')` won't work out of the box.
-
-### What We Bundle
-
-Because Reactstrap doesn't include jQuery plugins, this module bundles:
-- **Vue 2.6** - For reactive data binding on the modal
-- **Bootstrap 4 modal plugin** - Just the modal jQuery plugin, not full Bootstrap JS
+3. **Vue 3 Import Map** (opt-in) - Use Vue 3 in your own ES modules
+4. **Static Session Helpers** - `Session::get()`/`set()` instead of `$this->getRequest()->getSession()->get()`
 
 ## File Structure
 
 ```
 a-simpler/
-├── _config/config.yml              # Loads assets via extra_requirements
+├── _config/config.yml              # Auto-loads core, opt-in for modal/import map
 ├── src/
-│   └── Session.php                 # Static session accessor class
-├── templates/
-│   ├── Includes/
-│   │   └── SimplerAdminItems.ss    # XHR buffer template
-│   └── SilverStripe/Admin/Includes/
-│       └── CMSLoadingScreen.ss     # Template override to include SimplerAdminItems
+│   ├── Session.php                 # Static session accessor class
+│   └── AdminExtension.php          # Injects Vue 3 import map (opt-in)
 ├── client/
 │   ├── src/js/
-│   │   ├── simpler-domevents-emulator.js   # window.simpler_dom + MutationObserver
-│   │   ├── react-mountevents-emitter.js    # Injector transform for Form component
-│   │   └── simpler-silverstripe.js         # Vue + BS4 modal (self-contained, no SS template)
+│   │   ├── simpler-silverstripe.js # Core: DOM events, jQuery $, window.simpler
+│   │   └── simpler-modal.js        # Opt-in: BS4 modal + Vue 3 modal app
 │   ├── src/styles/
 │   │   └── simpler-silverstripe.scss
 │   └── dist/js/
-│       ├── simpler-domevents.js            # Auto-loaded (combined emulator + react)
-│       └── simpler-silverstripe.js         # Opt-in bundle (~445kb)
+│       ├── simpler-silverstripe.js     # Core bundle (~5kb)
+│       ├── simpler-modal.js            # Modal bundle (~192kb, includes Vue 3)
+│       ├── vue.esm-browser.js          # Vue 3 dev (~530kb, for import map)
+│       └── vue.esm-browser.prod.js     # Vue 3 prod (~162kb, for import map)
 ├── webpack.mix.js
 └── package.json
 ```
 
-## Usage
+## Bundle Sizes
 
-### 1. DOM Events (auto-loaded)
+| File | Size | Contents | Loaded |
+|------|------|----------|--------|
+| `simpler-silverstripe.js` | ~5kb | DOM events, React mounts, jQuery `$`, `window.simpler` | Always |
+| `vue.esm-browser.prod.js` | ~162kb | Vue 3 for import map (prod) | Via AdminExtension |
+| `vue.esm-browser.js` | ~530kb | Vue 3 for import map (dev) | Via AdminExtension |
+| `simpler-modal.js` | ~192kb | BS4 modal + Vue 3 with compiler | Opt-in |
 
-Listen for dynamically inserted content in admin:
+## Configuration
 
-```js
-document.addEventListener("DOMNodesInserted", function(event) {
-    console.log('Type:', event.detail.type); // LOAD, MUTATION, MOUNT, UNMOUNT
-    console.log('Target:', event.target);    // Element or document
-
-    // Initialize your JS on new content
-    initMyPlugin();
-});
-
-document.addEventListener("DOMNodesRemoved", function(event) {
-    // Cleanup when content is removed
-    destroyMyPlugin();
-});
-```
-
-**Event types:**
-- `LOAD` - Initial DOMContentLoaded
-- `MUTATION` - MutationObserver detected DOM changes
-- `MOUNT` - React Form component mounted (triggered on specific element)
-- `UNMOUNT` - React Form component will unmount
-
-### 2. Modal Dialog (opt-in)
-
-First, enable in your config:
-
+**Auto-loaded** (via module config):
 ```yaml
-# mymodule/_config/config.yml
 SilverStripe\Admin\LeftAndMain:
   extra_requirements_javascript:
     - 'restruct/silverstripe-simpler:client/dist/js/simpler-silverstripe.js'
 ```
 
-Then use in JS:
+**Opt-in Vue Import Map** (add to your project config):
+```yaml
+SilverStripe\Admin\LeftAndMain:
+  extensions:
+    - Restruct\Silverstripe\Simpler\AdminExtension
+```
+
+**Opt-in Modal** (add to your project config):
+```yaml
+SilverStripe\Admin\LeftAndMain:
+  extra_requirements_javascript:
+    - 'restruct/silverstripe-simpler:client/dist/js/simpler-modal.js'
+```
+
+## Usage
+
+### 1. DOM Events (always loaded)
 
 ```js
-// Open modal
-simpler.modal.show = true;
+document.addEventListener("DOMNodesInserted", function(event) {
+    console.log('Type:', event.detail.type); // LOAD, MUTATION, MOUNT, UNMOUNT
+    console.log('Target:', event.target);
+    initMyPlugin();
+});
+
+document.addEventListener("DOMNodesRemoved", function(event) {
+    destroyMyPlugin();
+});
+```
+
+### 2. Vue 3 in Your Own Code (opt-in)
+
+When `AdminExtension` is enabled, Vue 3 is available via import map.
+
+#### Option A: Self-Contained ES Module File
+
+```js
+// mymodule/client/dist/js/my-vue-app.js (not webpack-bundled)
+import { createApp, ref } from 'vue';
+
+document.addEventListener('DOMContentLoaded', () => {
+    createApp({
+        setup() {
+            const count = ref(0);
+            return { count };
+        },
+        template: `<button @click="count++">Count: {{ count }}</button>`
+    }).mount('#my-app');
+});
+```
+
+Load via Requirements with `type="module"`:
+```php
+Requirements::javascript('mymodule/client/dist/js/my-vue-app.js', ['type' => 'module']);
+```
+
+#### Option B: Inline in SilverStripe Template
+
+Mix SS template tags directly with Vue - ideal for injecting server data:
+
+```html
+<%-- templates/Includes/MyWidget.ss --%>
+<script type="module">
+import { createApp } from 'vue'
+
+createApp({
+    data() {
+        return {
+            apiBase: $Ctrl.Link('api').JSON.RAW,
+            items: $Items.JSON.RAW,
+            currentItem: {
+                id: $CurrentItem.ID.JSON,
+                title: "$CurrentItem.Title.JS",
+                isActive: $CurrentItem.IsActive.JSON.RAW,
+            }
+        }
+    },
+    methods: {
+        async saveItem() {
+            const response = await fetch(this.apiBase + '/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(this.currentItem)
+            });
+        }
+    }
+}).mount('#my-widget-$ID')
+</script>
+
+<div id="my-widget-$ID">
+    <h3>{{ currentItem.title }}</h3>
+    <ul>
+        <li v-for="item in items" :key="item.ID">
+            {{ item.Title }}
+            <% if $ShowExtra %>
+                <span class="extra">$ExtraInfo</span>
+            <% end_if %>
+        </li>
+    </ul>
+    <button @click="saveItem">{$T('Save')}</button>
+</div>
+```
+
+**Key patterns:**
+- `$Variable.JSON.RAW` for objects/arrays/booleans (raw JSON)
+- `"$Variable.JS"` for strings (JS-escaped, in quotes)
+- `$ID` or `$HexID` for unique element IDs
+- Mix `<% if %>` SS conditionals with Vue `v-if` as needed
+
+### 3. Modal Dialog (opt-in)
+
+```js
+// Basic modal
 simpler.modal.title = 'My Dialog';
 simpler.modal.bodyHtml = '<p>Content here</p>';
+simpler.modal.show = true;
+
+// All options
+simpler.modal.title = 'Confirm Action';
+simpler.modal.bodyHtml = '<p>Are you sure?</p>';
 simpler.modal.closeBtn = true;
 simpler.modal.closeTxt = 'Cancel';
 simpler.modal.saveBtn = true;
-simpler.modal.saveTxt = 'Save';
+simpler.modal.saveTxt = 'Confirm';
+simpler.modal.static = true;  // Prevent closing via backdrop/Escape
+simpler.modal.show = true;
 
-// Show loading spinner then load content
+// Loading content via AJAX
+simpler.modal.title = 'Loading...';
 simpler.modal.bodyHtml = simpler.spinner;
-$.get('/my/ajax/endpoint', function(html) {
+simpler.modal.show = true;
+$.get('/my/endpoint', function(html) {
     simpler.modal.bodyHtml = html;
+    simpler.modal.title = 'Loaded Content';
 });
 
 // Close modal
 simpler.modal.show = false;
 ```
 
-### 3. Static Session Helpers
+**Modal properties** (all reset to defaults on close):
+- `show` (bool) - Show/hide modal
+- `title` (string) - Modal title
+- `bodyHtml` (string) - Modal body HTML
+- `closeBtn` (bool) - Show close button
+- `closeTxt` (string) - Close button text
+- `saveBtn` (bool) - Show save/primary button
+- `saveTxt` (string) - Save button text
+- `static` (bool) - Prevent closing via backdrop click or Escape
+
+### 4. Static Session Helpers
 
 ```php
 use Restruct\Silverstripe\Simpler\Session;
 
-// Instead of: $this->getRequest()->getSession()->get('key')
 $value = Session::get('key');
 Session::set('key', 'value');
 Session::clear('key');
 Session::clearAll();
 ```
 
-## Configuration
-
-Default config (auto-applied):
-
-```yaml
-SilverStripe\Admin\LeftAndMain:
-  extra_requirements_css:
-    - 'restruct/silverstripe-simpler:client/dist/styles/simpler-silverstripe.css'
-  extra_requirements_javascript:
-    - 'restruct/silverstripe-simpler:client/dist/js/simpler-domevents.js'
-    # Opt-in for modal + Vue (also makes framework's jQuery available as '$'):
-    # - 'restruct/silverstripe-simpler:client/dist/js/simpler-silverstripe.js'
-```
-
-The `SimplerAdminItems.ss` include is injected via template override (`CMSLoadingScreen.ss`).
-
-## Build (for development)
-
-```bash
-cd a-simpler
-yarn install
-yarn run dev        # Development build (watch)
-yarn run production # Production build
-```
-
 ## Technical Notes
 
-- **MutationObserver** watches entire document for DOM changes, debounces at 100ms
-- **React integration** via `Injector.transform()` wrapping Form component
-- **jQuery** is framework-provided (external), we alias it to `$` and `window.$`
-- **Bootstrap 4 modal plugin** is bundled (Reactstrap doesn't include jQuery plugins)
-- **Vue 2.6** is bundled for reactive modal data binding
-- **Modal is self-contained in JS** - Vue renders it with explicit template, no SS template needed
-- Uses SilverStripe webpack externals for React, ReactDOM, Injector compatibility
-
-## Known Issues
-
-### `el.getAttribute is not a function` error when opening modal
-
-When opening the modal, you may see this console error:
-```
-Uncaught TypeError: el.getAttribute is not a function
-    at r.eval [as matches] (eval at <anonymous> (vendor.js...
-```
-
-This is a **SilverStripe core bug** in jQuery entwine's selector matching code. When the modal opens/closes, DOM mutations trigger entwine to match selectors against mutation nodes, but it fails on text nodes which don't have `getAttribute()`.
-
-The error is non-fatal - the modal works correctly despite the error.
+- **MutationObserver** watches document for DOM changes, batched at 100ms
+- **React Form wrapper** via `Injector.transform()` emits mount/unmount events
+- **jQuery** is framework-provided (external), aliased to `$`
+- **Bootstrap 4 modal** jQuery plugin bundled in simpler-modal.js
+- **Vue 3** bundled with template compiler in simpler-modal.js
+- **Import map** auto-switches between dev/prod Vue based on `Director::isDev()`
 
 ## Version Notes
 
-- **Tag 0.1.9**: SilverStripe 5 compatible (use this for SS5 projects)
-- **main branch**: SilverStripe 6 (do not use for SS5)
+- **Branch ss5**: SilverStripe 5 compatible (Vue 3)
+- **Tag 0.1.9**: SilverStripe 5 compatible (Vue 2, legacy)
+- **main branch**: SilverStripe 6

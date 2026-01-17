@@ -5,29 +5,34 @@ mix.setResourceRoot('../');
 
 mix.sass('client/src/styles/simpler-silverstripe.scss', 'styles');
 
-// mix.scripts = basic concattenation
-// mix.babel = concattenation + babel (ES2015 -> vanilla)
-// mix.js = components, react, vue, etc
-mix.js([
-    'client/src/js/simpler-domevents-emulator.js',
-    'client/src/js/react-mountevents-emitter.js',
-], 'js/simpler-domevents.js');
+// Core bundle (always loaded): DOM events, React mount events, jQuery alias, window.simpler
 mix.js('client/src/js/simpler-silverstripe.js', 'js');
-// mix.js('client/src/js/vue-component.js', 'js');
-// mix.js('client/src/js/react-mountevents-emitter.js', 'js');
-// mix.js('client/src/js/vue-component.js', 'js');
 
-mix.autoload({
-    // make webpack prepend var $ = require('jquery') to every $, jQuery or window.jQuery
-    // (this will result in jQuery being compiled-in, even though it may be provided externally)
-//    jquery: ['$', 'jQuery', 'window.jQuery'],
-    'vue$': 'vue/dist/vue.esm.js' // required to load the x/y version of vue (with compiler)
-});
+// Modal bundle (opt-in): Bootstrap 4 modal + Vue 3 modal app
+mix.js('client/src/js/simpler-modal.js', 'js');
+
+// Copy Vue 3 builds for import map usage (devs can use Vue in their own ES modules)
+// Dev build: warnings, devtools (~530kb)
+mix.copy('node_modules/vue/dist/vue.esm-browser.js', 'client/dist/js/vue.esm-browser.js');
+// Prod build: minified (~162kb)
+mix.copy('node_modules/vue/dist/vue.esm-browser.prod.js', 'client/dist/js/vue.esm-browser.prod.js');
 
 mix.webpackConfig({
     resolve: {
         alias: {
-            'vue$': 'vue/dist/vue.esm.js'
+            // Vue 3 has two bundler builds:
+            // - vue.runtime.esm-bundler.js (~50kb) - Runtime only, NO template compiler
+            // - vue.esm-bundler.js (~70kb) - Full build WITH template compiler
+            //
+            // We need the template compiler because simpler-modal.js uses inline template strings:
+            //   template: `<div class="modal">...</div>`
+            //
+            // Without this alias, webpack uses the runtime-only build and you get:
+            //   "Component provided template option but runtime compilation is not supported"
+            //
+            // Alternative would be pre-compiled SFCs (.vue files + vue-loader), but we
+            // deliberately avoid that for simplicity and because SFC bundling caused issues.
+            'vue': 'vue/dist/vue.esm-bundler.js'
         }
     },
     externals: {

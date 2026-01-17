@@ -1,118 +1,125 @@
-// Use framework's jQuery (marked as external in webpack.mix.js)
-import jQuery from 'jquery';
-// Bootstrap 4 modal plugin only (requires jQuery, extends $.fn.modal)
-import 'bootstrap/js/dist/modal';
-// Vue 2 with template compiler (explicit path to ensure full build is used)
-import Vue from 'vue/dist/vue.esm.js';
+// Simpler Silverstripe - Core functionality (always loaded)
+// - Synthetic DOM events (DOMNodesInserted/DOMNodesRemoved)
+// - React Form mount/unmount events
+// - jQuery alias ($)
+// - Global simpler object
 
-// Global 'simpler' object to hold various data like modal content etc, watched by Vue to trigger required behaviour
-// "Uhm, why are you not using Vuex/Redux/some other complex way?" – Because why would I.
+import jQuery from 'jquery';
+import React from 'react';
+import ReactDOM from 'react-dom';
+import Injector from 'lib/Injector';
+
+// Alias framework's jQuery 3 to '$'
+window.$ = jQuery;
+
+// Global 'simpler' object (extendable by opt-in modules like simpler-modal.js)
 window.simpler = {
-    // spinner HTML template (sr-only for BS4)
+    // Spinner HTML template (sr-only for Bootstrap 4)
     spinner: '<div class="text-center p-3"><div class="spinner-border" role="status"><span class="sr-only">Loading...</span></div></div>',
-    // modal
-    modal: {
-        show: false,
-        title: "...",
-        bodyHtml: "...",
-        closeBtn: true,
-        closeTxt: "Close",
-        saveBtn: true,
-        saveTxt: "Save",
-    }
 };
 
 //
-// Run early on to set some basics
+// DOM Events Emulator - 'emulate' DOMContentLoaded events for ajax-inserted/react rendered content
+// Event types: LOAD (DOMContentLoaded), MUTATION (MutationObserver), MOUNT/UNMOUNT (React Form)
 //
-(function() {
-    // 'alias' framework's jQuery 3 to '$' (if depending on legacy jQueery, add an 'alias' in your JS)
-    window.$ = jQuery;
-    window.Vue = Vue; // global VueJS (v2)
+window.simpler_dom = {
+    // Emit event only once per multiple triggers within delay period
+    insertEventDelay: 40,
+    insertEventTimeout: null,
 
-    // // DEV: output DOMNodesInserted & DOMNodesRemoved info
-    // document.addEventListener('DOMNodesInserted', (event) => {
-    //
-    //     console.log('RECEIVING (document): DOMNodesInserted', event);
-    //
-    //     // $('.vue-instance').not('.vue-inited').each(function (){
-    //     //     console.log('Paint it RED');
-    //     //     $(this).css('color','red').addClass('vue-inited');
-    //     //     new Vue({
-    //     //         el: this,
-    //     //     });
-    //     // });
-    // });
+    emitInsert: function (type, element, delay, loadedUrl) {
+        // Ignore non-admin fetch/xhr events
+        if (loadedUrl && loadedUrl.indexOf(ss.config.adminUrl) < 0) {
+            return;
+        }
 
+        let event = new CustomEvent("DOMNodesInserted", {
+            bubbles: true,
+            cancelable: true,
+            detail: { type: type.toUpperCase(), time: Date.now() }
+        });
+        let eventDelay = (typeof delay !== 'undefined') ? delay : window.simpler_dom.insertEventDelay;
+
+        // 'group' multiple triggers and emit (on the specific element of the last trigger, or on document)
+        if (eventDelay && !element) {
+            // Reset previous events/timeout still underway
+            if (window.simpler_dom.insertEventTimeout) {
+                clearTimeout(window.simpler_dom.insertEventTimeout);
+            }
+            // Set new timeout
+            window.simpler_dom.insertEventTimeout = setTimeout(function () {
+                document.dispatchEvent(event);
+            }, eventDelay);
+        } else {
+            // Emit directly, on specific element (or document)
+            (element && typeof element.dispatchEvent === 'function')
+                ? element.dispatchEvent(event)
+                : document.dispatchEvent(event);
+        }
+    },
+
+    emitRemove: function (type, element, delay) {
+        let event = new CustomEvent("DOMNodesRemoved", {
+            bubbles: true,
+            cancelable: true,
+            detail: { type: type.toUpperCase(), time: Date.now() }
+        });
+        (element && typeof element.dispatchEvent === 'function')
+            ? element.dispatchEvent(event)
+            : document.dispatchEvent(event);
+    },
+};
+
+// IE9+ CustomEvent polyfill
+(function () {
+    if (typeof window.CustomEvent === "function") return false;
+    function CustomEvent(event, params) {
+        params = params || { bubbles: false, cancelable: false, detail: null };
+        var evt = document.createEvent('CustomEvent');
+        evt.initCustomEvent(event, params.bubbles, params.cancelable, params.detail);
+        return evt;
+    }
+    window.CustomEvent = CustomEvent;
+})();
+
+// Set up MutationObserver to emit DOM events
+(function () {
+    let observer = new MutationObserver(function (mutations) {
+        simpler_dom.emitInsert('mutation', null, 100); // batch at 100ms
+    });
+    observer.observe(document, {
+        childList: true,
+        subtree: true
+    });
+
+    // Dispatch initial event on DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', () => {
+        simpler_dom.emitInsert('load', null, 0);
+    });
 })();
 
 //
-// Init stuff which needs to be triggered just once on real pageload/DOMContentLoaded's
+// React Form mount/unmount event emitter
+// Wraps SilverStripe's Form component to emit events when React forms mount/unmount
 //
-document.addEventListener('DOMContentLoaded', () => {
-
-    // Create modal container (no SS template needed - Vue renders the modal)
-    var container = document.createElement('div');
-    container.id = 'simplerAdminModalContainer';
-    document.body.appendChild(container);
-
-    // Bootstrap Modal (Vue rendered): to test opening a simple modal, paste into console: simpler.modal.show = true;
-    var simpleModal = new Vue({
-        el: '#simplerAdminModalContainer',
-        data: simpler.modal,
-        // Explicit template (Bootstrap 4 markup)
-        template: `
-            <div class="modal fade" id="simplerAdminModal"
-                 tabindex="-1" aria-labelledby="simpleAdminModalTitle" aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="simpleAdminModalTitle">{{ title }}</h5>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                        <div class="modal-body" id="simpleAdminModalBody" v-html="bodyHtml"></div>
-                        <div class="modal-footer">
-                            <button v-if="closeBtn" type="button" class="btn btn-outline-secondary" data-dismiss="modal">{{ closeTxt }}</button>
-                            <button v-if="saveBtn" type="button" class="btn btn-primary font-icon-tick" id="simpleAdminModalPrimaryBtn">{{ saveTxt }}</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `,
-        watch: {
-            // make modal open/closable by changing data value (Bootstrap 4 jQuery plugin)
-            show: function (val) {
-                $('#simplerAdminModal').modal(val ? 'show' : 'hide');
-            },
-            bodyHtml: function (val) {
-                $('#simplerAdminModal').modal('handleUpdate');
-            }
-        },
-        mounted: function () {
-            // Sync Bootstrap modal events back to Vue data
-            var self = this;
-            $('#simplerAdminModal').on('show.bs.modal', function () {
-                simpler.modal.show = true;
-            });
-            $('#simplerAdminModal').on('hide.bs.modal', function () {
-                simpler.modal.show = false;
-            });
+const FormWrapper = (Form) => (
+    class FormWrapperItem extends React.Component {
+        componentDidMount() {
+            this.browserDomEl = ReactDOM.findDOMNode(this);
+            window.simpler_dom.emitInsert('mount', this.browserDomEl, 0);
         }
-    });
 
-});
+        componentWillUnmount() {
+            window.simpler_dom.emitRemove('unmount', this.browserDomEl, 0);
+        }
 
-//
-// Init stuff which needs to be triggered AFTER all other scripts etc
-//
-document.onreadystatechange = function () { // https://developer.mozilla.org/en-US/docs/Web/API/Document/readystatechange_event
-    if (document.readyState === "interactive") {
-
-        // document.addEventListener("DOMNodesInserted", function (event) {
-        //     console.log('DOMNodesInserted EL:', event.target);
-        // });
-
+        render() {
+            return <Form {...this.props} />;
+        }
     }
-}
+);
+
+// Register transformation on SilverStripe Form component
+Injector.transform('simpler-form-mount-emitter', (updater) => {
+    updater.component('Form', FormWrapper);
+});

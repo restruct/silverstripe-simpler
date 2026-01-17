@@ -5,6 +5,13 @@ SilverStripe\Admin\LeftAndMain:
   extra_requirements_css:
     - 'restruct/silverstripe-simpler:client/dist/styles/simpler-silverstripe.css'
   extra_requirements_javascript:
-    - 'restruct/silverstripe-simpler:client/dist/js/simpler-domevents.js'
-    ## jQuery/BootstrapJS/VueJS: to opt-in, include this JS requirement in your module/project config:
-#    - 'restruct/silverstripe-simpler:client/dist/js/simpler-silverstripe.js'
+    # Core: DOM events, React mount events, jQuery alias ($), window.simpler
+    - 'restruct/silverstripe-simpler:client/dist/js/simpler-silverstripe.js'
+    ## Opt-in Modal: Bootstrap 4 modal + Vue 3 modal app
+    ## Add this line to your module/project config to enable:
+    # - 'restruct/silverstripe-simpler:client/dist/js/simpler-modal.js'
+
+## Opt-in Import Map: Vue 3 available via ES modules for your own code
+## Add this extension to your module/project config to enable:
+# extensions:
+#   - Restruct\Silverstripe\Simpler\AdminExtension
