@@ -19,7 +19,7 @@
     <noscript><p class="nojs-warning alert alert-warning"><%t SilverStripe\\Admin\\LeftAndMain.REQUIREJS 'The CMS requires that you have JavaScript enabled.' %></p></noscript>
 </div>
 
-
+<!-- SIMPLER -->
 <%-- some custom Simpler includes... --%>
 <% include SimplerAdminItems %>
 

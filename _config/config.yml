@@ -2,8 +2,6 @@
 Name: simpler_silverstripe
 ---
 SilverStripe\Admin\LeftAndMain:
-  extensions:
-    - 'Restruct\Silverstripe\Simpler\AdminExtension'
   extra_requirements_css:
     - 'restruct/silverstripe-simpler:client/dist/styles/simpler-silverstripe.css'
   extra_requirements_javascript:
