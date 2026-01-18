@@ -139,7 +139,7 @@ class SimplerModalField extends PureModal
         } else {
             $content = $this->getContent();
             if ($content) {
-                $config['bodyHtml'] = is_string($content) ? $content : $content->forTemplate();
+                $config['bodyHtml'] = is_string($content) ? $content : (string) $content->forTemplate();
             } else {
                 $config['bodyHtml'] = '';
             }

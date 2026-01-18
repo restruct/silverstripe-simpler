@@ -47,9 +47,9 @@ class SimplerModalAction extends PureModalAction
     {
         $config = [
             'title' => $this->getDialogTitle() ?: $this->Title(),
-            'closeBtn' => true,
+            'closeBtn' => false,  // Modal has X button; form has its own action button
             'closeTxt' => 'Cancel',
-            'saveBtn' => false,  // Form has its own submit button
+            'saveBtn' => false,
             'saveTxt' => 'Save',
         ];
 
@@ -61,7 +61,7 @@ class SimplerModalAction extends PureModalAction
         // Render fieldList as proper SilverStripe Form
         $fieldList = $this->getFieldList();
         if ($fieldList && $fieldList->count()) {
-            $config['bodyHtml'] = $this->renderModalForm()->forTemplate();
+            $config['bodyHtml'] = (string) $this->renderModalForm()->forTemplate();
         } else {
             $config['bodyHtml'] = '';
         }
