@@ -21,6 +21,8 @@ composer require restruct/silverstripe-simpler
 
 Listen for dynamically inserted content (Ajax, React components):
 
+**Note:** An `xhr_buffer` element (`<template id="xhr_buffer">`) is automatically created on page load. This hidden element is used to parse AJAX HTML through jQuery before inserting into Vue/DOM, which triggers Entwine-style listeners that don't fire when content is inserted directly by Vue.
+
 ```js
 document.addEventListener("DOMNodesInserted", function(event) {
     console.log('Type:', event.detail.type); // LOAD, MUTATION, MOUNT, UNMOUNT
@@ -172,6 +174,7 @@ simpler.modal.closeTxt = 'Cancel';  // Close button text (default: "Close")
 simpler.modal.saveBtn = true;       // Show primary button (default: true)
 simpler.modal.saveTxt = 'Confirm';  // Primary button text (default: "Save")
 simpler.modal.static = true;        // Prevent closing via backdrop/Escape (default: false)
+simpler.modal.size = 'lg';          // 'sm', 'lg', 'xl' or custom like '800px', '90vw' (default: null)
 simpler.modal.show = true;
 ```
 
@@ -190,7 +193,96 @@ $.get('/my/ajax/endpoint', function(html) {
 
 All properties reset to defaults when the modal gets closed.
 
-## 4. Static Session Helpers
+## 4. PHP FormField Classes (drop-in PureModal replacement)
+
+`SimplerModalField` and `SimplerModalAction` extend `lekoala/silverstripe-pure-modal` classes but render via `simpler.modal` instead of the CSS checkbox mechanism.
+
+### Why This Is Better Than PureModal
+
+**PureModal's limitation:** Renders inside CMS form (as FormField), so forms in modal = nested forms (invalid HTML). PureModal works around this using iframes for any modal content that contains forms.
+
+**simpler.modal advantage:** Modal is appended to `document.body` (outside CMS form hierarchy). Forms inside the modal work correctly with no iframe needed!
+
+This means:
+- No iframe required for modal forms
+- Real `<form>` elements work naturally
+- SimplerModalAction can render actual SilverStripe Forms that submit directly
+- Simpler than PureModal's "move modal, add hidden field, submit parent form" approach
+
+### Usage
+
+```php
+use Restruct\Silverstripe\Simpler\SimplerModalField;
+use Restruct\Silverstripe\Simpler\SimplerModalAction;
+
+// Iframe content (e.g., preview) with extra large modal
+SimplerModalField::create('preview', 'Preview')
+    ->setIframeSrc('/admin/preview/123')
+    ->setIframeHeight('80vh')
+    ->setModalSize('xl')  // 'sm', 'lg', 'xl' or custom like '800px', '90vw'
+    ->setCloseBtn(false)  // Hide footer close button (default: true)
+    ->setButtonIcon('eye')
+    ->addExtraClass('btn-outline-info');
+
+// HTML content with custom width
+SimplerModalField::create('info', 'Info')
+    ->setContent('<p>Some information here</p>')
+    ->setModalSize('600px');
+
+// Custom dialog title (different from button text)
+SimplerModalField::create('details', 'Show Details')
+    ->setDialogTitle('Item Details')
+    ->setContent($myHtmlContent);
+
+// CMS action with form fields (form submits directly - no iframe!)
+SimplerModalAction::create('translate', 'Translate')
+    ->setFieldList(FieldList::create([
+        DropdownField::create('lang', 'Language', ['en' => 'English', 'nl' => 'Dutch']),
+        TextareaField::create('notes', 'Notes'),
+    ]))
+    ->setDialogButtonTitle('Start Translation');
+```
+
+### How It Works
+
+The PHP classes render a button with a `data-simpler-modal` attribute containing JSON config:
+
+```html
+<button type="button" data-simpler-modal='{"title":"Preview","bodyHtml":"<iframe src=\"/admin/preview/123\"..."}'>
+    Preview
+</button>
+```
+
+A generic click handler in `simpler-modal.js` parses this config and opens the modal:
+
+```js
+document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-simpler-modal]');
+    if (!btn) return;
+
+    const config = JSON.parse(btn.dataset.simplerModal);
+    Object.assign(simpler.modal, config);
+    simpler.modal.show = true;
+});
+```
+
+### Migration from PureModal
+
+Simply change the imports - the API is compatible:
+
+```php
+// Change from:
+use LeKoala\PureModal\PureModal;
+use LeKoala\PureModal\PureModalAction;
+
+// To:
+use Restruct\Silverstripe\Simpler\SimplerModalField as PureModal;
+use Restruct\Silverstripe\Simpler\SimplerModalAction as PureModalAction;
+```
+
+All existing code continues to work - same API, better rendering.
+
+## 5. Static Session Helpers
 
 ```php
 use Restruct\Silverstripe\Simpler\Session;
@@ -202,7 +294,7 @@ Session::clear('key');
 Session::clearAll();
 ```
 
-## Configuration Summary
+## 6. Configuration Summary
 
 ```yaml
 # Default (auto-applied by module):
@@ -221,7 +313,7 @@ SilverStripe\Admin\LeftAndMain:
     - 'restruct/silverstripe-simpler:client/dist/js/simpler-modal.js'
 ```
 
-## Development
+## 7. Development
 
 ```bash
 cd a-simpler

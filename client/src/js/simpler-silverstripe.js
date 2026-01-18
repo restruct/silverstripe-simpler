@@ -9,8 +9,8 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import Injector from 'lib/Injector';
 
-// Alias framework's jQuery 3 to '$'
-window.$ = jQuery;
+// Alias framework's jQuery 3 to '$' (only if not already defined)
+window.$ = window.$ || jQuery;
 
 // Global 'simpler' object (extendable by opt-in modules like simpler-modal.js)
 window.simpler = {
@@ -70,18 +70,6 @@ window.simpler_dom = {
     },
 };
 
-// IE9+ CustomEvent polyfill
-(function () {
-    if (typeof window.CustomEvent === "function") return false;
-    function CustomEvent(event, params) {
-        params = params || { bubbles: false, cancelable: false, detail: null };
-        var evt = document.createEvent('CustomEvent');
-        evt.initCustomEvent(event, params.bubbles, params.cancelable, params.detail);
-        return evt;
-    }
-    window.CustomEvent = CustomEvent;
-})();
-
 // Set up MutationObserver to emit DOM events
 (function () {
     let observer = new MutationObserver(function (mutations) {
@@ -92,8 +80,15 @@ window.simpler_dom = {
         subtree: true
     });
 
-    // Dispatch initial event on DOMContentLoaded
     document.addEventListener('DOMContentLoaded', () => {
+        // Create xhr_buffer element - a hidden <template> used to parse AJAX HTML through jQuery
+        // before inserting into Vue/DOM. This triggers Entwine-style listeners that don't fire
+        // when content is inserted directly by Vue.
+        const xhrBuffer = document.createElement('template');
+        xhrBuffer.id = 'xhr_buffer';
+        document.body.appendChild(xhrBuffer);
+
+        // Dispatch initial event on DOMContentLoaded
         simpler_dom.emitInsert('load', null, 0);
     });
 })();

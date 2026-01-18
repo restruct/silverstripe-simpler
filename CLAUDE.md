@@ -20,7 +20,12 @@ a-simpler/
 ├── _config/config.yml              # Auto-loads core, opt-in for modal/import map
 ├── src/
 │   ├── Session.php                 # Static session accessor class
-│   └── AdminExtension.php          # Injects Vue 3 import map (opt-in)
+│   ├── AdminExtension.php          # Injects Vue 3 import map (opt-in)
+│   ├── SimplerModalField.php       # Drop-in PureModal replacement
+│   └── SimplerModalAction.php      # Drop-in PureModalAction replacement
+├── templates/Restruct/Silverstripe/Simpler/
+│   ├── SimplerModalField.ss        # Button with data-simpler-modal attribute
+│   └── SimplerModalAction.ss       # Action button with data-simpler-modal attribute
 ├── client/
 │   ├── src/js/
 │   │   ├── simpler-silverstripe.js # Core: DOM events, jQuery $, window.simpler
@@ -194,10 +199,48 @@ $.get('/my/endpoint', function(html) {
 simpler.modal.show = false;
 ```
 
+### 3b. PHP FormField Classes (PureModal replacement)
+
+SimplerModalField and SimplerModalAction extend `lekoala/silverstripe-pure-modal` but render via simpler.modal.
+
+**Key advantage:** Modal is appended to `document.body` (outside CMS form), so real forms work without iframe!
+
+```php
+use Restruct\Silverstripe\Simpler\SimplerModalField;
+use Restruct\Silverstripe\Simpler\SimplerModalAction;
+
+// Iframe content (preview)
+SimplerModalField::create('preview', 'Preview')
+    ->setIframeSrc('/admin/preview/123')
+    ->setIframeHeight('80vh')
+    ->setModalSize('xl')  // 'sm', 'lg', 'xl' or '800px', '90vw'
+    ->setCloseBtn(false)  // Hide footer close button (default: true)
+    ->setButtonIcon('eye');
+
+// HTML content
+SimplerModalField::create('info', 'Info')
+    ->setContent('<p>Some info</p>');
+
+// CMS action with form fields (no iframe needed!)
+SimplerModalAction::create('translate', 'Translate')
+    ->setFieldList(FieldList::create([
+        DropdownField::create('lang', 'Language', $languages),
+    ]))
+    ->setDialogButtonTitle('Translate');
+```
+
+Data attribute pattern - button renders with JSON config:
+```html
+<button data-simpler-modal='{"title":"Preview","bodyHtml":"..."}'>Preview</button>
+```
+
+Generic click handler in simpler-modal.js opens modal from data attribute.
+
 **Modal properties** (all reset to defaults on close):
 - `show` (bool) - Show/hide modal
 - `title` (string) - Modal title
 - `bodyHtml` (string) - Modal body HTML
+- `size` (string) - 'sm', 'lg', 'xl' or custom like '800px', '90vw'
 - `closeBtn` (bool) - Show close button
 - `closeTxt` (string) - Close button text
 - `saveBtn` (bool) - Show save/primary button
