@@ -3,7 +3,6 @@
 namespace Restruct\Silverstripe\Simpler;
 
 use LeKoala\PureModal\PureModal;
-use SilverStripe\View\Requirements;
 use SilverStripe\ORM\FieldType\DBHTMLText;
 
 /**
@@ -23,7 +22,9 @@ class SimplerModalField extends PureModal
      */
     public static function set_requirements(): void
     {
-        Requirements::javascript('restruct/silverstripe-simpler:client/dist/js/simpler-modal.js', ['type' => 'module']);
+        // Modal uses Vue via import map
+        AdminExtension::requireImportMap();
+        AdminExtension::requireModal();
     }
 
     /**

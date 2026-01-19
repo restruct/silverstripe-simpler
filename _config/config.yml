@@ -7,11 +7,28 @@ SilverStripe\Admin\LeftAndMain:
   extra_requirements_javascript:
     # Core: DOM events, React mount events, jQuery alias ($), window.simpler
     - 'restruct/silverstripe-simpler:client/dist/js/simpler-silverstripe.js'
-    ## Opt-in Modal: Bootstrap 4 modal + Vue 3 modal app
-    ## Add this line to your module/project config to enable:
-    # - 'restruct/silverstripe-simpler:client/dist/js/simpler-modal.js'
 
-## Opt-in Import Map: Vue 3 available via ES modules for your own code
-## Add this extension to your module/project config to enable:
-# extensions:
-#   - Restruct\Silverstripe\Simpler\AdminExtension
+## Opt-in features (add to your project config):
+##
+## Option 1: Import Map + Modal (via AdminExtension with simpler_include_modal)
+## Best for: Using both your own Vue components AND the modal
+# SilverStripe\Admin\LeftAndMain:
+#   extensions:
+#     - Restruct\Silverstripe\Simpler\AdminExtension
+#   simpler_include_modal: true
+##
+## Option 2: Import Map only (via AdminExtension)
+## Best for: Using Vue 3 in your own ES modules (no modal)
+# SilverStripe\Admin\LeftAndMain:
+#   extensions:
+#     - Restruct\Silverstripe\Simpler\AdminExtension
+##
+## Option 3: Modal only via PHP classes
+## Just use SimplerModalField/SimplerModalAction - they auto-inject the import map
+##
+## Option 4: Modal via JS only (without PHP classes)
+# SilverStripe\Admin\LeftAndMain:
+#   extensions:
+#     - Restruct\Silverstripe\Simpler\AdminExtension
+#   extra_requirements_javascript:
+#     - 'restruct/silverstripe-simpler:client/dist/js/simpler-modal.js': { type: module }

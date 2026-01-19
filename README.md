@@ -4,20 +4,21 @@ Makes SilverStripe Admin development simpler by re-introducing traditional basic
 
 ## Features
 
-| Feature | Size | Loaded |
-|---------|------|--------|
-| **DOM Events** - `DOMNodesInserted`/`DOMNodesRemoved` for dynamic content | ~5kb | Always |
-| **Vue 3 Import Map** - Use Vue in your own ES modules | ~162kb | Opt-in |
-| **Modal Dialog** - Bootstrap 4 modal via `simpler.modal` | ~192kb | Opt-in |
-| **Static Session** - `Session::get()` instead of `$this->getRequest()->getSession()->get()` | - | Always |
+| Feature | Size | Loaded | Notes |
+|---------|------|--------|-------|
+| **Static Session** - `Session::get()` instead of verbose alternative | - | Always | PHP only |
+| **HeadRequirements** - Import maps and early scripts in `<head>` | - | Always | PHP + templates |
+| **DOM Events** - `DOMNodesInserted`/`DOMNodesRemoved` for dynamic content | ~5kb | Always | Core bundle |
+| **Vue 3 Import Map** - Use Vue in your own ES modules | ~162kb | Opt-in | AdminExtension |
+| **Modal Dialog** - Bootstrap 4 modal via `simpler.modal` | ~17kb | Opt-in | Requires import map |
 
-## Installation
+**Total sizes:**
+- DOM events only: ~5kb (always loaded)
+- Import map with Vue only: ~5kb + 162kb = **~167kb** (for your own Vue components)
+- Modal via PHP: ~5kb + 162kb + 17kb = **~184kb** (import map auto-injected)
+- Modal via JS config: same, but requires AdminExtension in config
 
-```bash
-composer require restruct/silverstripe-simpler
-```
-
-## 1. DOM Events (always loaded)
+## 1. DOM events (always loaded)
 
 Listen for dynamically inserted content (Ajax, React components):
 
@@ -44,7 +45,14 @@ document.addEventListener("DOMNodesRemoved", function(event) {
 - `MOUNT` - React Form component mounted (on specific element)
 - `UNMOUNT` - React Form component will unmount
 
-## 2. Vue 3 Import Map (opt-in)
+### jQuery `$` alias (opt-in)
+
+This module does not set `window.$` by default (anymore, to avoid conflicts). If you want the `$` shorthand, either:
+
+1. Add to your own JS file: `window.$ = window.$ || window.jQuery;`
+2. Or use Requirements: `Requirements::customScript('window.$ = window.$ || window.jQuery;', 'jquery-alias');`
+
+## 2. Vue 3 components (via import map, opt-in)
 
 For using Vue 3 in your own code, add the extension:
 
@@ -57,7 +65,7 @@ SilverStripe\Admin\LeftAndMain:
 
 This injects an import map that makes Vue available via `import { createApp } from 'vue'`. The extension automatically uses the dev build (with warnings/devtools) or prod build based on environment.
 
-### Option A: Self-Contained ES Module File
+### Option A: Self-contained ES module file
 
 Create a JS file (not webpack-bundled) and load it as a module:
 
@@ -84,7 +92,7 @@ use SilverStripe\View\Requirements;
 Requirements::javascript('mymodule/client/dist/js/my-vue-app.js', ['type' => 'module']);
 ```
 
-### Option B: Inline in SilverStripe Template
+### Option B: Inline in SilverStripe template
 
 Mix SS template tags directly with Vue - ideal for injecting server data into Vue components:
 
@@ -145,18 +153,31 @@ createApp({
 - Mix `<% if %>` SS conditionals with Vue `v-if` directives as needed
 - Use `{$T('Label')}` or `$fieldLabel('Name')` for translated strings in HTML
 
-## 3. Modal Dialog (opt-in)
+## 3. Modal dialog (Vue 3 + BS modal, opt-in)
 
-Add to your project config:
+> **Note:** The Vue import map is automatically injected when using SimplerModalField/Action PHP classes.
+> Manual setup only needed if using `simpler.modal` directly from JavaScript.
 
+To use `simpler.modal` from your own JS, you need both the Vue import map and simpler-modal.js:
+
+**Option A: Via PHP** (in your Controller or Extension):
+```php
+use Restruct\Silverstripe\Simpler\AdminExtension;
+
+AdminExtension::requireImportMap();
+AdminExtension::requireModal();
+```
+
+**Option B: Via YAML config** (always loaded in admin):
 ```yaml
 # app/_config/config.yml
 SilverStripe\Admin\LeftAndMain:
-  extra_requirements_javascript:
-    - 'restruct/silverstripe-simpler:client/dist/js/simpler-modal.js'
+  extensions:
+    - Restruct\Silverstripe\Simpler\AdminExtension
+  simpler_include_modal: true
 ```
 
-### Basic Usage
+### Basic usage
 
 ```js
 simpler.modal.title = 'My Dialog';
@@ -164,7 +185,7 @@ simpler.modal.bodyHtml = '<p>Hello world!</p>';
 simpler.modal.show = true;
 ```
 
-### All Options
+### All options
 
 ```js
 simpler.modal.title = 'Confirm Action';
@@ -178,7 +199,7 @@ simpler.modal.size = 'lg';          // 'sm', 'lg', 'xl' or custom like '800px', 
 simpler.modal.show = true;
 ```
 
-### Loading Content via AJAX
+### Loading content via AJAX
 
 ```js
 simpler.modal.title = 'Loading...';
@@ -193,21 +214,15 @@ $.get('/my/ajax/endpoint', function(html) {
 
 All properties reset to defaults when the modal gets closed.
 
-## 4. PHP FormField Classes (drop-in PureModal replacement)
+## 4. PHP FormField classes (drop-in PureModal replacement)
 
 `SimplerModalField` and `SimplerModalAction` extend `lekoala/silverstripe-pure-modal` classes but render via `simpler.modal` instead of the CSS checkbox mechanism.
 
-### Why This Is Better Than PureModal
+### How it differs from PureModal
 
-**PureModal's limitation:** Renders inside CMS form (as FormField), so forms in modal = nested forms (invalid HTML). PureModal works around this using iframes for any modal content that contains forms.
+PureModal renders inside the CMS form (as FormField), which means forms in modal become nested forms (invalid HTML). PureModal elegantly works around this using iframes.
 
-**simpler.modal advantage:** Modal is appended to `document.body` (outside CMS form hierarchy). Forms inside the modal work correctly with no iframe needed!
-
-This means:
-- No iframe required for modal forms
-- Real `<form>` elements work naturally
-- SimplerModalAction can render actual SilverStripe Forms that submit directly
-- Simpler than PureModal's "move modal, add hidden field, submit parent form" approach
+SimplerModal takes a different approach: the modal is appended to `document.body` (outside the CMS form hierarchy), so forms inside work correctly without needing an iframe. This allows SimplerModalAction to render actual SilverStripe forms that submit directly.
 
 ### Usage
 
@@ -243,7 +258,7 @@ SimplerModalAction::create('translate', 'Translate')
     ->setDialogButtonTitle('Start Translation');
 ```
 
-### How It Works
+### How it works
 
 The PHP classes render a button with a `data-simpler-modal` attribute containing JSON config:
 
@@ -282,7 +297,7 @@ use Restruct\Silverstripe\Simpler\SimplerModalAction as PureModalAction;
 
 All existing code continues to work - same API, better rendering.
 
-## 5. Static Session Helpers
+## 5. Static session helpers
 
 ```php
 use Restruct\Silverstripe\Simpler\Session;
@@ -294,7 +309,28 @@ Session::clear('key');
 Session::clearAll();
 ```
 
-## 6. Configuration Summary
+## 6. HeadRequirements (import maps, early scripts)
+
+For scripts that must be in `<head>` (import maps, early config):
+
+```php
+use Restruct\Silverstripe\Simpler\HeadRequirements;
+
+// Import map entries (browsers allow only ONE import map - these accumulate)
+HeadRequirements::import_map('vue', 'restruct/silverstripe-simpler:client/dist/js/vue.esm-browser.js');
+HeadRequirements::import_map('lodash', 'https://cdn.jsdelivr.net/npm/lodash-es@4/lodash.min.js');
+
+// JavaScript file in <head>
+HeadRequirements::javascript('mymodule:client/dist/js/early-script.js');
+HeadRequirements::javascript('https://cdn.example.com/lib.js', ['defer' => true]);
+
+// Inline script in <head>
+HeadRequirements::custom_script('window.CONFIG = { debug: true }', 'my-config');
+```
+
+Also available as template globals: `$HeadReq_importMap()`, `$HeadReq_js()`, `$HeadReq_customScript()`.
+
+## 7. Configuration summary
 
 ```yaml
 # Default (auto-applied by module):
@@ -302,27 +338,40 @@ SilverStripe\Admin\LeftAndMain:
   extra_requirements_javascript:
     - 'restruct/silverstripe-simpler:client/dist/js/simpler-silverstripe.js'
 
-# Opt-in Vue Import Map (add to your config):
+# Option 1: Import Map + Modal (via AdminExtension with simpler_include_modal)
+# Best for: Using both your own Vue components AND the modal via JS
+SilverStripe\Admin\LeftAndMain:
+  extensions:
+    - Restruct\Silverstripe\Simpler\AdminExtension
+  simpler_include_modal: true
+
+# Option 2: Import Map only (via AdminExtension)
+# Best for: Using Vue 3 in your own ES modules (no modal)
 SilverStripe\Admin\LeftAndMain:
   extensions:
     - Restruct\Silverstripe\Simpler\AdminExtension
 
-# Opt-in Modal (add to your config):
+# Option 3: Modal only via PHP classes
+# Just use SimplerModalField/SimplerModalAction - they auto-inject the import map
+
+# Option 4: Modal via JS only (without PHP classes)
 SilverStripe\Admin\LeftAndMain:
+  extensions:
+    - Restruct\Silverstripe\Simpler\AdminExtension
   extra_requirements_javascript:
-    - 'restruct/silverstripe-simpler:client/dist/js/simpler-modal.js'
+    - 'restruct/silverstripe-simpler:client/dist/js/simpler-modal.js': { type: module }
 ```
 
-## 7. Development
+## 8. Development
 
 ```bash
-cd a-simpler
+cd silverstripe-simpler
 yarn install
 yarn run dev        # Watch mode
 yarn run production # Production build
 ```
 
-## Version Notes
+## Version notes
 
 - **Branch ss5**: SilverStripe 5 (Vue 3)
 - **Tag 0.1.9**: SilverStripe 5 (Vue 2, legacy)

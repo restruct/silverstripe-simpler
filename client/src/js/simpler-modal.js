@@ -1,10 +1,14 @@
 // Simpler Silverstripe - Modal (opt-in)
 // - Bootstrap 4 modal plugin
 // - Vue 3 reactive modal app
-// Requires simpler-silverstripe.js to be loaded first (for jQuery and window.simpler)
+// Requires simpler-silverstripe.js to be loaded first (provides window.$ and window.simpler)
 
-import jQuery from 'jquery';
+// Use framework's jQuery directly (Bootstrap modal also uses it via shim)
+const $ = window.jQuery;
+
+// Bootstrap 4 modal plugin (needs jQuery available as window.jQuery)
 import 'bootstrap/js/dist/modal';
+
 import { createApp, reactive } from 'vue';
 
 // Default modal state (used for reset on close)
@@ -104,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         mounted() {
             // Save element ref outside reactive data (so it doesn't get reset on close)
-            window.simpler.modalEl = jQuery('#simplerAdminModal');
+            window.simpler.modalEl = $('#simplerAdminModal');
             // Sync Bootstrap modal events back to Vue data
             window.simpler.modalEl.on('show.bs.modal', () => {
                 window.simpler.modal.show = true;

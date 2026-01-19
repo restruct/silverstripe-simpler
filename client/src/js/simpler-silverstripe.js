@@ -1,16 +1,15 @@
 // Simpler Silverstripe - Core functionality (always loaded)
 // - Synthetic DOM events (DOMNodesInserted/DOMNodesRemoved)
 // - React Form mount/unmount events
-// - jQuery alias ($)
 // - Global simpler object
+//
+// NOTE: This module does NOT set window.$ - add it yourself if needed:
+//   Requirements::customScript('window.$ = window.$ || window.jQuery;', 'jquery-alias');
 
 import jQuery from 'jquery';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import Injector from 'lib/Injector';
-
-// Alias framework's jQuery 3 to '$' (only if not already defined)
-window.$ = window.$ || jQuery;
 
 // Global 'simpler' object (extendable by opt-in modules like simpler-modal.js)
 window.simpler = {

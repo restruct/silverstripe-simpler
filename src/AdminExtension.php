@@ -4,13 +4,15 @@ namespace Restruct\Silverstripe\Simpler;
 
 use SilverStripe\Admin\LeftAndMain;
 use SilverStripe\Core\Extension;
-use SilverStripe\Core\Manifest\ModuleResourceLoader;
 use SilverStripe\Control\Director;
 use SilverStripe\View\Requirements;
 
 /**
- * Extension for LeftAndMain to inject Vue 3 import map
+ * Extension for LeftAndMain to inject Vue 3 import map and optionally the modal JS
  * This allows developers to use Vue 3 in their own ES modules via: import { createApp } from 'vue'
+ *
+ * Configuration options:
+ * - include_modal: Also load simpler-modal.js (default: false)
  *
  * @extends Extension<LeftAndMain>
  */
@@ -18,19 +20,34 @@ class AdminExtension extends Extension
 {
     public function init(): void
     {
+        self::requireImportMap();
+
+        // Optionally include modal JS via config
+        if ($this->owner->config()->get('simpler_include_modal')) {
+            self::requireModal();
+        }
+    }
+
+    /**
+     * Inject Vue 3 import map into the page head.
+     * Can be called statically from anywhere (e.g., SimplerModalField).
+     */
+    public static function requireImportMap(): void
+    {
         // Choose dev or prod Vue build based on environment
         $vueBuild = Director::isDev()
             ? 'vue.esm-browser.js'       // Dev: warnings, devtools (~530kb)
             : 'vue.esm-browser.prod.js'; // Prod: minified (~162kb)
 
-        $vueUrl = ModuleResourceLoader::singleton()->resolveURL(
-            "restruct/silverstripe-simpler:client/dist/js/{$vueBuild}"
-        );
+        HeadRequirements::import_map('vue', "restruct/silverstripe-simpler:client/dist/js/{$vueBuild}");
+    }
 
-        // Import map must be in <head> before any module scripts
-        Requirements::insertHeadTags(
-            '<script type="importmap">{"imports":{"vue":"' . $vueUrl . '"}}</script>',
-            'simpler-importmap'
-        );
+    /**
+     * Include the modal JS file.
+     * Can be called statically from anywhere.
+     */
+    public static function requireModal(): void
+    {
+        Requirements::javascript('restruct/silverstripe-simpler:client/dist/js/simpler-modal.js', ['type' => 'module']);
     }
 }

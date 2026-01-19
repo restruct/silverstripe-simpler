@@ -12,6 +12,7 @@ Makes SilverStripe Admin development simpler by re-introducing traditional basic
 2. **Modal Dialog** (opt-in) - Bootstrap 4 modal via global `simpler.modal` object
 3. **Vue 3 Import Map** (opt-in) - Use Vue 3 in your own ES modules
 4. **Static Session Helpers** - `Session::get()`/`set()` instead of `$this->getRequest()->getSession()->get()`
+5. **HeadRequirements** - Import maps and early scripts in `<head>` (also template globals)
 
 ## File Structure
 
@@ -20,6 +21,7 @@ a-simpler/
 ├── _config/config.yml              # Auto-loads core, opt-in for modal/import map
 ├── src/
 │   ├── Session.php                 # Static session accessor class
+│   ├── HeadRequirements.php        # Static helpers for head JS (import maps, early scripts)
 │   ├── AdminExtension.php          # Injects Vue 3 import map (opt-in)
 │   ├── SimplerModalField.php       # Drop-in PureModal replacement
 │   └── SimplerModalAction.php      # Drop-in PureModalAction replacement
@@ -48,7 +50,9 @@ a-simpler/
 | `simpler-silverstripe.js` | ~5kb | DOM events, React mounts, jQuery `$`, `window.simpler` | Always |
 | `vue.esm-browser.prod.js` | ~162kb | Vue 3 for import map (prod) | Via AdminExtension |
 | `vue.esm-browser.js` | ~530kb | Vue 3 for import map (dev) | Via AdminExtension |
-| `simpler-modal.js` | ~192kb | BS4 modal + Vue 3 with compiler | Opt-in |
+| `simpler-modal.js` | ~17kb | BS4 modal plugin + Vue modal app | Opt-in (requires AdminExtension) |
+
+**Note:** `simpler-modal.js` uses Vue via import map - AdminExtension must be enabled for modal to work.
 
 ## Configuration
 
@@ -59,18 +63,31 @@ SilverStripe\Admin\LeftAndMain:
     - 'restruct/silverstripe-simpler:client/dist/js/simpler-silverstripe.js'
 ```
 
-**Opt-in Vue Import Map** (add to your project config):
+**Opt-in configurations** (add to your project config):
+
 ```yaml
+# Option 1: Import Map + Modal (via AdminExtension with simpler_include_modal)
+# Best for: Using both your own Vue components AND the modal
 SilverStripe\Admin\LeftAndMain:
   extensions:
     - Restruct\Silverstripe\Simpler\AdminExtension
-```
+  simpler_include_modal: true
 
-**Opt-in Modal** (add to your project config):
-```yaml
+# Option 2: Import Map only (via AdminExtension)
+# Best for: Using Vue 3 in your own ES modules (no modal)
 SilverStripe\Admin\LeftAndMain:
+  extensions:
+    - Restruct\Silverstripe\Simpler\AdminExtension
+
+# Option 3: Modal only via PHP classes
+# Just use SimplerModalField/SimplerModalAction - they auto-inject the import map
+
+# Option 4: Modal via JS only (without PHP classes)
+SilverStripe\Admin\LeftAndMain:
+  extensions:
+    - Restruct\Silverstripe\Simpler\AdminExtension
   extra_requirements_javascript:
-    - 'restruct/silverstripe-simpler:client/dist/js/simpler-modal.js'
+    - 'restruct/silverstripe-simpler:client/dist/js/simpler-modal.js': { type: module }
 ```
 
 ## Usage
@@ -257,6 +274,27 @@ Session::set('key', 'value');
 Session::clear('key');
 Session::clearAll();
 ```
+
+### 5. HeadRequirements (import maps, early scripts)
+
+For scripts that must be in `<head>` (import maps, early config):
+
+```php
+use Restruct\Silverstripe\Simpler\HeadRequirements;
+
+// Import map entries (browsers allow only ONE import map - these accumulate)
+HeadRequirements::import_map('vue', 'restruct/silverstripe-simpler:client/dist/js/vue.esm-browser.js');
+HeadRequirements::import_map('lodash', 'https://cdn.jsdelivr.net/npm/lodash-es@4/lodash.min.js');
+
+// JavaScript file in <head>
+HeadRequirements::javascript('mymodule:client/dist/js/early-script.js');
+HeadRequirements::javascript('https://cdn.example.com/lib.js', ['defer' => true]);
+
+// Inline script in <head>
+HeadRequirements::custom_script('window.CONFIG = { debug: true }', 'my-config');
+```
+
+Also available as template globals: `$HeadReq_importMap()`, `$HeadReq_js()`, `$HeadReq_customScript()`.
 
 ## Technical Notes
 
