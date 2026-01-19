@@ -153,6 +153,8 @@ createApp({
 - Mix `<% if %>` SS conditionals with Vue `v-if` directives as needed
 - Use `{$T('Label')}` or `$fieldLabel('Name')` for translated strings in HTML
 
+> **Entwine compatibility note:** Prefer `v-show` over `v-if` for conditional elements. Vue 3 uses comment nodes (`<!--v-if-->`) as placeholders when `v-if` conditions are false. SilverStripe's Entwine library has a bug where its MutationObserver doesn't filter out comment nodes, causing `el.getAttribute is not a function` errors. Using `v-show` (which uses CSS `display:none`) avoids this issue.
+
 ## 3. Modal dialog (Vue 3 + BS modal, opt-in)
 
 > **Note:** The Vue import map is automatically injected when using SimplerModalField/Action PHP classes.
