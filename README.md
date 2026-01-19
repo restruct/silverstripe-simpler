@@ -1,95 +1,378 @@
 # Simpler Silverstripe
 
-This module tries to make Silverstripe Admin interface development a bit simpler by naively re-introducting some traditional basics.
+Makes SilverStripe Admin development simpler by re-introducing traditional basics.
 
-## Added functionality, so far:
-- 'Synthetic' JS load/unload events (`DOMNodesInserted`/`DOMNodesRemoved`) for dynamic inserts/react components
-- (opt-in) Simple modal dialog (based on/requires additional loading of one JS file of ~260kb containing jQuery, VueJS & Bootstrap)
-- Static Session::get etc accessors (just `require Restruct\Silverstripe\Simpler\Session`) instead of changing everything to $this->getRequest()->getSession()->etc
+## Features
 
-## JS event for dynamically inserted & removed DOM nodes, even react components
-(sort of what Entwine onmatch/onadd does, but without the polling and also working for react-rendered areas)
-- To have your JS executed even when a form/fragment gets inserted from an Ajax/XHR request, listen for `DOMNodesInserted`
-- To remove/destroy JS stuff, listen for `DOMNodesRemoved`
-- The event object received by the handler contains an event.detail.type value:
-  - `LOAD` (regular `DOMContenLoaded`, trigered once, always on document)
-  - `XHR` (Ajax requests to /admin, triggered lots of times (), always on document)
-  - `FETCH` (fetch requests to /admin, triggered lots of times () but not very reliably, always triggered on document)
-  - `MOUNT`/`UNMOUNT` (on mounting/unmounting of react form-components, triggered reliably & exactly once per mount/unmount, on the actual form element)
+| Feature | Size | Loaded | Notes |
+|---------|------|--------|-------|
+| **Static Session** - `Session::get()` instead of verbose alternative | - | Always | PHP only |
+| **HeadRequirements** - Import maps and early scripts in `<head>` | - | Always | PHP + templates |
+| **DOM Events** - `DOMNodesInserted`/`DOMNodesRemoved` for dynamic content | ~5kb | Always | Core bundle |
+| **Vue 3 Import Map** - Use Vue in your own ES modules | ~162kb | Opt-in | AdminExtension |
+| **Modal Dialog** - Bootstrap 4 modal via `simpler.modal` | ~17kb | Opt-in | Requires import map |
 
-```JS
-document.addEventListener("DOMNodesInserted", function (event) {
-    // in case the event was triggered by react mount, we have a specific node to search within (else the event target will be the document)
-    console.log('DOMNodesInserted', event.detail.type, event.target);
+**Total sizes:**
+- DOM events only: ~5kb (always loaded)
+- Import map with Vue only: ~5kb + 162kb = **~167kb** (for your own Vue components)
+- Modal via PHP: ~5kb + 162kb + 17kb = **~184kb** (import map auto-injected)
+- Modal via JS config: same, but requires AdminExtension in config
+
+## 1. DOM events (always loaded)
+
+Listen for dynamically inserted content (Ajax, React components):
+
+**Note:** An `xhr_buffer` element (`<template id="xhr_buffer">`) is automatically created on page load. This hidden element is used to parse AJAX HTML through jQuery before inserting into Vue/DOM, which triggers Entwine-style listeners that don't fire when content is inserted directly by Vue.
+
+```js
+document.addEventListener("DOMNodesInserted", function(event) {
+    console.log('Type:', event.detail.type); // LOAD, MUTATION, MOUNT, UNMOUNT
+    console.log('Target:', event.target);
+
+    // Initialize your plugins on new content
+    initMyPlugin();
 });
 
-document.addEventListener("DOMNodesRemoved", function (event) {
-    // in case the event was triggered by react unmount, we have a specific node to search within (else the event target will be the document)
-    console.log('DOMNodesRemoved', event.detail.type, event.target);
+document.addEventListener("DOMNodesRemoved", function(event) {
+    // Cleanup when content is removed
+    destroyMyPlugin();
 });
 ```
 
-### Example: FilePond
-As a practical example, this module contains a 'compatibility layer' for the excelent [FilePond module](https://github.com/lekoala/silverstripe-filepond) to also initialize filepond on dynamically inserted content *(this code is already contained in this module, just copied here as an example of how the events work)*
+**Event types:**
+- `LOAD` - Initial DOMContentLoaded
+- `MUTATION` - MutationObserver detected DOM changes
+- `MOUNT` - React Form component mounted (on specific element)
+- `UNMOUNT` - React Form component will unmount
 
-```JS
-document.addEventListener("DOMNodesInserted", function () {
-    // Just a precaution to skip execution if we don't have a FilePond yet...
-    if (typeof FilePond !== "undefined") {
-        // Now attach filepond to any newly inserted file inputs
-        var anchors = document.querySelectorAll('input[type="file"].filepond');
-        for (var i = 0; i < anchors.length; i++) {
-            var el = anchors[i];
-            var pond = FilePond.create(el);
-            var config = JSON.parse(el.dataset.config);
-            for (var key in config) {
-                pond[key] = config[key];
+### jQuery `$` alias (opt-in)
+
+This module does not set `window.$` by default (anymore, to avoid conflicts). If you want the `$` shorthand, either:
+
+1. Add to your own JS file: `window.$ = window.$ || window.jQuery;`
+2. Or use Requirements: `Requirements::customScript('window.$ = window.$ || window.jQuery;', 'jquery-alias');`
+
+## 2. Vue 3 components (via import map, opt-in)
+
+For using Vue 3 in your own code, add the extension:
+
+```yaml
+# app/_config/config.yml
+SilverStripe\Admin\LeftAndMain:
+  extensions:
+    - Restruct\Silverstripe\Simpler\AdminExtension
+```
+
+This injects an import map that makes Vue available via `import { createApp } from 'vue'`. The extension automatically uses the dev build (with warnings/devtools) or prod build based on environment.
+
+### Option A: Self-contained ES module file
+
+Create a JS file (not webpack-bundled) and load it as a module:
+
+```js
+// mymodule/client/dist/js/my-vue-app.js
+import { createApp, ref } from 'vue';
+
+document.addEventListener('DOMContentLoaded', () => {
+    createApp({
+        setup() {
+            const count = ref(0);
+            return { count };
+        },
+        template: `<button @click="count++">Clicked {{ count }} times</button>`
+    }).mount('#my-app');
+});
+```
+
+Load via Requirements with `type="module"`:
+
+```php
+use SilverStripe\View\Requirements;
+
+Requirements::javascript('mymodule/client/dist/js/my-vue-app.js', ['type' => 'module']);
+```
+
+### Option B: Inline in SilverStripe template
+
+Mix SS template tags directly with Vue - ideal for injecting server data into Vue components:
+
+```html
+<%-- templates/Includes/MyWidget.ss --%>
+<script type="module">
+import { createApp } from 'vue'
+
+createApp({
+    data() {
+        return {
+            apiBase: $Ctrl.Link('api').JSON.RAW,
+            items: $Items.JSON.RAW,
+            currentItem: {
+                id: $CurrentItem.ID.JSON,
+                title: "$CurrentItem.Title.JS",
+                isActive: $CurrentItem.IsActive.JSON.RAW,
             }
         }
+    },
+    methods: {
+        async saveItem() {
+            const response = await fetch(this.apiBase + '/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(this.currentItem)
+            });
+            // handle response...
+        }
     }
+}).mount('#my-widget-$ID')
+</script>
+
+<div id="my-widget-$ID">
+
+    <h3>{{ currentItem.title }}</h3>
+
+    <ul>
+        <li v-for="item in items" :key="item.ID">
+            {{ item.Title }}
+            <% if $ShowExtra %>
+                <span class="extra">$ExtraInfo</span>
+            <% end_if %>
+        </li>
+    </ul>
+
+    <button @click="saveItem" class="btn btn-primary">
+        {$T('Save')}
+    </button>
+
+</div>
+```
+
+**Key patterns:**
+- Use `$Variable.JSON.RAW` for objects/arrays/booleans (raw JSON, no escaping)
+- Use `"$Variable.JS"` for strings (JS-escaped, in quotes)
+- Use `$ID` or `$HexID` to make element IDs unique when template is used multiple times
+- Mix `<% if %>` SS conditionals with Vue `v-if` directives as needed
+- Use `{$T('Label')}` or `$fieldLabel('Name')` for translated strings in HTML
+
+## 3. Modal dialog (Vue 3 + BS modal, opt-in)
+
+> **Note:** The Vue import map is automatically injected when using SimplerModalField/Action PHP classes.
+> Manual setup only needed if using `simpler.modal` directly from JavaScript.
+
+To use `simpler.modal` from your own JS, you need both the Vue import map and simpler-modal.js:
+
+**Option A: Via PHP** (in your Controller or Extension):
+```php
+use Restruct\Silverstripe\Simpler\AdminExtension;
+
+AdminExtension::requireImportMap();
+AdminExtension::requireModal();
+```
+
+**Option B: Via YAML config** (always loaded in admin):
+```yaml
+# app/_config/config.yml
+SilverStripe\Admin\LeftAndMain:
+  extensions:
+    - Restruct\Silverstripe\Simpler\AdminExtension
+  simpler_include_modal: true
+```
+
+### Basic usage
+
+```js
+simpler.modal.title = 'My Dialog';
+simpler.modal.bodyHtml = '<p>Hello world!</p>';
+simpler.modal.show = true;
+```
+
+### All options
+
+```js
+simpler.modal.title = 'Confirm Action';
+simpler.modal.bodyHtml = '<p>Are you sure?</p>';
+simpler.modal.closeBtn = true;      // Show close button (default: true)
+simpler.modal.closeTxt = 'Cancel';  // Close button text (default: "Close")
+simpler.modal.saveBtn = true;       // Show primary button (default: true)
+simpler.modal.saveTxt = 'Confirm';  // Primary button text (default: "Save")
+simpler.modal.static = true;        // Prevent closing via backdrop/Escape (default: false)
+simpler.modal.size = 'lg';          // 'sm', 'lg', 'xl' or custom like '800px', '90vw' (default: null)
+simpler.modal.show = true;
+```
+
+### Loading content via AJAX
+
+```js
+simpler.modal.title = 'Loading...';
+simpler.modal.bodyHtml = simpler.spinner;  // Built-in loading spinner
+simpler.modal.show = true;
+
+$.get('/my/ajax/endpoint', function(html) {
+    simpler.modal.bodyHtml = html;
+    simpler.modal.title = 'Content Loaded';
 });
 ```
 
-## Opt-in extra JS requirement (~260kb), adds:
-- (global) Bootstrap js (mainly for modal, but all-included)
-- (global) $ & jQue**e**ry 3 (has to be slightly different indeed, as jquery is taken)<br>
-  <img width="136" src="https://user-images.githubusercontent.com/1005986/122156443-4043b880-ce69-11eb-9659-efe9ad3f3f18.png">
-- even (global) VueJS 2 (I know, crazy!)
+All properties reset to defaults when the modal gets closed.
 
-## Modal dialog
-<img width="450" src="https://user-images.githubusercontent.com/1005986/122156433-3de15e80-ce69-11eb-9787-b4dd7d39f371.png"><br>
-Opening a simple modal dialog is a matter of setting some properties of the (again, global) `simpler` object.<br>
+## 4. PHP FormField classes (drop-in PureModal replacement)
 
-The modal dialog requires loading an additional JS file (of currently ~250kb) which adds jQuery 3, Bootstrap JS and VueJs 2 to your project:
+`SimplerModalField` and `SimplerModalAction` extend `lekoala/silverstripe-pure-modal` classes but render via `simpler.modal` instead of the CSS checkbox mechanism.
 
-```YML
----
-Name: module_or_project
----
+### How it differs from PureModal
+
+PureModal renders inside the CMS form (as FormField), which means forms in modal become nested forms (invalid HTML). PureModal elegantly works around this using iframes.
+
+SimplerModal takes a different approach: the modal is appended to `document.body` (outside the CMS form hierarchy), so forms inside work correctly without needing an iframe. This allows SimplerModalAction to render actual SilverStripe forms that submit directly.
+
+### Usage
+
+```php
+use Restruct\Silverstripe\Simpler\SimplerModalField;
+use Restruct\Silverstripe\Simpler\SimplerModalAction;
+
+// Iframe content (e.g., preview) with extra large modal
+SimplerModalField::create('preview', 'Preview')
+    ->setIframeSrc('/admin/preview/123')
+    ->setIframeHeight('80vh')
+    ->setModalSize('xl')  // 'sm', 'lg', 'xl' or custom like '800px', '90vw'
+    ->setCloseBtn(false)  // Hide footer close button (default: true)
+    ->setButtonIcon('eye')
+    ->addExtraClass('btn-outline-info');
+
+// HTML content with custom width
+SimplerModalField::create('info', 'Info')
+    ->setContent('<p>Some information here</p>')
+    ->setModalSize('600px');
+
+// Custom dialog title (different from button text)
+SimplerModalField::create('details', 'Show Details')
+    ->setDialogTitle('Item Details')
+    ->setContent($myHtmlContent);
+
+// CMS action with form fields (form submits directly - no iframe!)
+SimplerModalAction::create('translate', 'Translate')
+    ->setFieldList(FieldList::create([
+        DropdownField::create('lang', 'Language', ['en' => 'English', 'nl' => 'Dutch']),
+        TextareaField::create('notes', 'Notes'),
+    ]))
+    ->setDialogButtonTitle('Start Translation');
+```
+
+### How it works
+
+The PHP classes render a button with a `data-simpler-modal` attribute containing JSON config:
+
+```html
+<button type="button" data-simpler-modal='{"title":"Preview","bodyHtml":"<iframe src=\"/admin/preview/123\"..."}'>
+    Preview
+</button>
+```
+
+A generic click handler in `simpler-modal.js` parses this config and opens the modal:
+
+```js
+document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-simpler-modal]');
+    if (!btn) return;
+
+    const config = JSON.parse(btn.dataset.simplerModal);
+    Object.assign(simpler.modal, config);
+    simpler.modal.show = true;
+});
+```
+
+### Migration from PureModal
+
+Simply change the imports - the API is compatible:
+
+```php
+// Change from:
+use LeKoala\PureModal\PureModal;
+use LeKoala\PureModal\PureModalAction;
+
+// To:
+use Restruct\Silverstripe\Simpler\SimplerModalField as PureModal;
+use Restruct\Silverstripe\Simpler\SimplerModalAction as PureModalAction;
+```
+
+All existing code continues to work - same API, better rendering.
+
+## 5. Static session helpers
+
+```php
+use Restruct\Silverstripe\Simpler\Session;
+
+// Instead of: $this->getRequest()->getSession()->get('key')
+$value = Session::get('key');
+Session::set('key', 'value');
+Session::clear('key');
+Session::clearAll();
+```
+
+## 6. HeadRequirements (import maps, early scripts)
+
+For scripts that must be in `<head>` (import maps, early config):
+
+```php
+use Restruct\Silverstripe\Simpler\HeadRequirements;
+
+// Import map entries (browsers allow only ONE import map - these accumulate)
+HeadRequirements::import_map('vue', 'restruct/silverstripe-simpler:client/dist/js/vue.esm-browser.js');
+HeadRequirements::import_map('lodash', 'https://cdn.jsdelivr.net/npm/lodash-es@4/lodash.min.js');
+
+// JavaScript file in <head>
+HeadRequirements::javascript('mymodule:client/dist/js/early-script.js');
+HeadRequirements::javascript('https://cdn.example.com/lib.js', ['defer' => true]);
+
+// Inline script in <head>
+HeadRequirements::custom_script('window.CONFIG = { debug: true }', 'my-config');
+```
+
+Also available as template globals: `$HeadReq_importMap()`, `$HeadReq_js()`, `$HeadReq_customScript()`.
+
+## 7. Configuration summary
+
+```yaml
+# Default (auto-applied by module):
 SilverStripe\Admin\LeftAndMain:
   extra_requirements_javascript:
-    # Require simpler object & jQuery/BootstrapJS/VueJS from SimplerSilverstripe module
     - 'restruct/silverstripe-simpler:client/dist/js/simpler-silverstripe.js'
+
+# Option 1: Import Map + Modal (via AdminExtension with simpler_include_modal)
+# Best for: Using both your own Vue components AND the modal via JS
+SilverStripe\Admin\LeftAndMain:
+  extensions:
+    - Restruct\Silverstripe\Simpler\AdminExtension
+  simpler_include_modal: true
+
+# Option 2: Import Map only (via AdminExtension)
+# Best for: Using Vue 3 in your own ES modules (no modal)
+SilverStripe\Admin\LeftAndMain:
+  extensions:
+    - Restruct\Silverstripe\Simpler\AdminExtension
+
+# Option 3: Modal only via PHP classes
+# Just use SimplerModalField/SimplerModalAction - they auto-inject the import map
+
+# Option 4: Modal via JS only (without PHP classes)
+SilverStripe\Admin\LeftAndMain:
+  extensions:
+    - Restruct\Silverstripe\Simpler\AdminExtension
+  extra_requirements_javascript:
+    - 'restruct/silverstripe-simpler:client/dist/js/simpler-modal.js': { type: module }
 ```
 
-Example of how the [Restruct Shortcodable module](https://github.com/restruct/silverstripe-shortcodable) opens the shortcode form dialog:
+## 8. Development
 
-```JS
-openDialog: function() {
-    simpler.modal.show = true;
-    simpler.modal.title = 'Insert/edit shortcode';
-    simpler.modal.closeBtn = false;
-    simpler.modal.closeTxt = 'Close';
-    simpler.modal.saveBtn = false;
-    simpler.modal.saveTxt = 'Insert shortcode';
-    // Initially show spinner in the modal, after loading actual content via XHR, replace the spinnter with the content
-    simpler.modal.bodyHtml = simpler.spinner;
-    $.post(shortcodable.controller_url, shortcodable.getCurrentEditorSelectionAsParsedShortcodeData(), function(data){
-        // (use the intermediary xhr_buffer element in order to have jQuery parse/activate listeners etc
-        simpler.modal.bodyHtml = $('#xhr_buffer').html(data).html();
-    });
-}
+```bash
+cd silverstripe-simpler
+yarn install
+yarn run dev        # Watch mode
+yarn run production # Production build
 ```
 
-## NOTES
-- Check [MutationObserver](https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver) (& [here](https://www.smashingmagazine.com/2019/04/mutationobserver-api-guide/)) to use instead of React transformer fo the for the `DOMNodesXXX` events
+## Version notes
+
+- **Branch ss5**: SilverStripe 5 (Vue 3)
+- **Tag 0.1.9**: SilverStripe 5 (Vue 2, legacy)
+- **main**: SilverStripe 6

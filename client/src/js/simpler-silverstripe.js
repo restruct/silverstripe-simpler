@@ -1,114 +1,119 @@
-//import {default as $, default as jQueery} from 'jquery';
-import {default as jQueery} from 'jquery'; // jquery as external needs to be commented out in webpack/.mix.js
-import 'bootstrap'; // make bootstrap work globally (SS probably uses some special flavour combined with react components or so)
-import Vue from 'vue'; // to hell with react...
+// Simpler Silverstripe - Core functionality (always loaded)
+// - Synthetic DOM events (DOMNodesInserted/DOMNodesRemoved)
+// - React Form mount/unmount events
+// - Global simpler object
+//
+// NOTE: This module does NOT set window.$ - add it yourself if needed:
+//   Requirements::customScript('window.$ = window.$ || window.jQuery;', 'jquery-alias');
 
-// Global 'simpler' object to hold various data like modal content etc, watched by Vue to trigger required behaviour like actually opening said modal etc.
-// “Uhm, why are you not using Vuex/Redux/some other complex way?” – Because why would I.
+import jQuery from 'jquery';
+import React from 'react';
+import ReactDOM from 'react-dom';
+import Injector from 'lib/Injector';
+
+// Global 'simpler' object (extendable by opt-in modules like simpler-modal.js)
 window.simpler = {
-    // spinner HTML template
+    // Spinner HTML template (sr-only for Bootstrap 4)
     spinner: '<div class="text-center p-3"><div class="spinner-border" role="status"><span class="sr-only">Loading...</span></div></div>',
-    // modal
-    modal: {
-        show: false,
-        title: "...",
-        bodyHtml: "...",
-        closeBtn: true,
-        closeTxt: "Close",
-        saveBtn: true,
-        saveTxt: "Save",
-    }
 };
 
 //
-// Run early on to set some basics
+// DOM Events Emulator - 'emulate' DOMContentLoaded events for ajax-inserted/react rendered content
+// Event types: LOAD (DOMContentLoaded), MUTATION (MutationObserver), MOUNT/UNMOUNT (React Form)
 //
-(function() {
+window.simpler_dom = {
+    // Emit event only once per multiple triggers within delay period
+    insertEventDelay: 40,
+    insertEventTimeout: null,
 
-    // Simply make jQuery 3 available globally as '$' (framework includes 1.7.2 as external, comment that out in webpack/mix if necessary);
-    // To check version: console.log(`$/jQueery: v${jQueery.fn.jquery}`);
-    window.jQueery = jQueery;
-    window.$ = jQueery;
-    window.Vue = Vue; // global Vue (maybe 'expose' instead once I figure out how to do that...)
+    emitInsert: function (type, element, delay, loadedUrl) {
+        // Ignore non-admin fetch/xhr events
+        if (loadedUrl && loadedUrl.indexOf(ss.config.adminUrl) < 0) {
+            return;
+        }
 
-    // // DEV: output DOMNodesInserted & DOMNodesRemoved info
-    // document.addEventListener('DOMNodesInserted', (event) => {
-    //
-    //     console.log('RECEIVING (document): DOMNodesInserted', event);
-    //
-    //     // $('.vue-instance').not('.vue-inited').each(function (){
-    //     //     console.log('Paint it RED');
-    //     //     $(this).css('color','red').addClass('vue-inited');
-    //     //     new Vue({
-    //     //         el: this,
-    //     //     });
-    //     // });
-    // });
+        let event = new CustomEvent("DOMNodesInserted", {
+            bubbles: true,
+            cancelable: true,
+            detail: { type: type.toUpperCase(), time: Date.now() }
+        });
+        let eventDelay = (typeof delay !== 'undefined') ? delay : window.simpler_dom.insertEventDelay;
 
+        // 'group' multiple triggers and emit (on the specific element of the last trigger, or on document)
+        if (eventDelay && !element) {
+            // Reset previous events/timeout still underway
+            if (window.simpler_dom.insertEventTimeout) {
+                clearTimeout(window.simpler_dom.insertEventTimeout);
+            }
+            // Set new timeout
+            window.simpler_dom.insertEventTimeout = setTimeout(function () {
+                document.dispatchEvent(event);
+            }, eventDelay);
+        } else {
+            // Emit directly, on specific element (or document)
+            (element && typeof element.dispatchEvent === 'function')
+                ? element.dispatchEvent(event)
+                : document.dispatchEvent(event);
+        }
+    },
+
+    emitRemove: function (type, element, delay) {
+        let event = new CustomEvent("DOMNodesRemoved", {
+            bubbles: true,
+            cancelable: true,
+            detail: { type: type.toUpperCase(), time: Date.now() }
+        });
+        (element && typeof element.dispatchEvent === 'function')
+            ? element.dispatchEvent(event)
+            : document.dispatchEvent(event);
+    },
+};
+
+// Set up MutationObserver to emit DOM events
+(function () {
+    let observer = new MutationObserver(function (mutations) {
+        simpler_dom.emitInsert('mutation', null, 100); // batch at 100ms
+    });
+    observer.observe(document, {
+        childList: true,
+        subtree: true
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // Create xhr_buffer element - a hidden <template> used to parse AJAX HTML through jQuery
+        // before inserting into Vue/DOM. This triggers Entwine-style listeners that don't fire
+        // when content is inserted directly by Vue.
+        const xhrBuffer = document.createElement('template');
+        xhrBuffer.id = 'xhr_buffer';
+        document.body.appendChild(xhrBuffer);
+
+        // Dispatch initial event on DOMContentLoaded
+        simpler_dom.emitInsert('load', null, 0);
+    });
 })();
 
 //
-// Init stuff which needs to be triggered just once on real pageload/DOMContentLoaded's
+// React Form mount/unmount event emitter
+// Wraps SilverStripe's Form component to emit events when React forms mount/unmount
 //
-document.addEventListener('DOMContentLoaded', () => {
-
-    // Bootstrap Modal (Vue rendered): to test opening a simple modal, paste into console: simpler.modal.show = true;
-    var simpleModal = new Vue({
-        el: '#simplerAdminModal',
-        data: simpler.modal,
-        watch: {
-            // make modal open/closable by changing data value
-            show: function (val) {
-                $('#simplerAdminModal').modal(val ? 'show' : 'hide');
-            },
-            bodyHtml: function (val) {
-                //$('#simpleAdminModalBody').html(val);
-                $('#simplerAdminModal').modal('handleUpdate');
-                //$('#simpleAdminModalBody select').trigger('onadd onload onmatch'); // doesn't work
-            }
+const FormWrapper = (Form) => (
+    class FormWrapperItem extends React.Component {
+        componentDidMount() {
+            this.browserDomEl = ReactDOM.findDOMNode(this);
+            window.simpler_dom.emitInsert('mount', this.browserDomEl, 0);
         }
-    });
-    $('#simplerAdminModal') // 'Alias' some Bootstrap state events to the Vue data
-        .on('show.bs.modal', function (event) {
-            simpler.modal.show = true;
-        })
-        .on('hide.bs.modal', function (event) {
-            simpler.modal.show = false;
-        });
 
-});
+        componentWillUnmount() {
+            window.simpler_dom.emitRemove('unmount', this.browserDomEl, 0);
+        }
 
-//
-// Init stuff which needs to be triggered AFTER all other scripts etc
-//
-document.onreadystatechange = function () { // https://developer.mozilla.org/en-US/docs/Web/API/Document/readystatechange_event
-    if (document.readyState === "interactive") {
-
-        // document.addEventListener("DOMNodesInserted", function (event) {
-        //     console.log('DOMNodesInserted EL:', event.target);
-        // });
-
+        render() {
+            return <Form {...this.props} />;
+        }
     }
-}
+);
 
-// //
-// // FilePond module compatibility helper: init filepond also on dynamically inserted nodes (via the synthetic simpler DOM events)
-// //
-// document.addEventListener("DOMNodesInserted", function () {
-//     if (typeof FilePond !== "undefined") {
-//         // initFilePond(); // has already been init'ed from filepond module on DOMContentLoaded...
-//
-//         // Attach filepond to all related inputs
-//         var anchors = document.querySelectorAll('input[type="file"].filepond');
-//         for (var i = 0; i < anchors.length; i++) {
-//             var el = anchors[i];
-//             var pond = FilePond.create(el);
-//             var config = JSON.parse(el.dataset.config);
-//             for (var key in config) {
-//                 // We can set the properties directly in the instance
-//                 // @link https://pqina.nl/filepond/docs/patterns/api/filepond-instance/#properties
-//                 pond[key] = config[key];
-//             }
-//         }
-//     }
-// });
+// Register transformation on SilverStripe Form component
+Injector.transform('simpler-form-mount-emitter', (updater) => {
+    updater.component('Form', FormWrapper);
+});

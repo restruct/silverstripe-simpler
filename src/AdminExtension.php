@@ -2,41 +2,52 @@
 
 namespace Restruct\Silverstripe\Simpler;
 
-use SilverStripe\Control\HTTPResponse;
+use SilverStripe\Admin\LeftAndMain;
 use SilverStripe\Core\Extension;
-use SilverStripe\ORM\FieldType\DBHTMLText;
-use SilverStripe\TemplateEngine\SSTemplateEngine;
-use SilverStripe\View\SSViewer;
-use SilverStripe\View\ViewLayerData;
+use SilverStripe\Control\Director;
+use SilverStripe\View\Requirements;
 
-class AdminExtension
-    extends Extension
+/**
+ * Extension for LeftAndMain to inject Vue 3 import map and optionally the modal JS
+ * This allows developers to use Vue 3 in their own ES modules via: import { createApp } from 'vue'
+ *
+ * Configuration options:
+ * - include_modal: Also load simpler-modal.js (default: false)
+ *
+ * @extends Extension<LeftAndMain>
+ */
+class AdminExtension extends Extension
 {
-
-    // Adapted from jonom/betternav, works for SS4 as well as 5 (replaces BrowserWarning.ss template override)
-    public function afterCallActionHandler($request, $action, $result)
+    public function init(): void
     {
-        $isHtmlResponse = $result instanceof DBHTMLText || ($result instanceof HTTPResponse && str_contains($result->getHeader('content-type'), 'text/html'));
-        if (!$isHtmlResponse ) {
-            return $result;
+        self::requireImportMap();
+
+        // Optionally include modal JS via config
+        if ($this->owner->config()->get('simpler_include_modal')) {
+            self::requireModal();
         }
-
-        $html = $result instanceof DBHTMLText ? $result->getValue() : $result->getBody();
-        $simplerAdminItems = SSTemplateEngine::create()->renderString('<% include SimplerAdminItems %>', ViewLayerData::create($this->getOwner()));
-
-        // Inject the NavigatorHTML before the closing </body> tag
-        $html = preg_replace(
-            '/(<\/body[^>]*>)/i',
-            $simplerAdminItems . '\\1',
-            $html ?? ''
-        );
-        if ($result instanceof DBHTMLText) {
-            $result->setValue($html);
-        } else {
-            $result->setBody($html);
-        }
-
-        return $result;
     }
 
+    /**
+     * Inject Vue 3 import map into the page head.
+     * Can be called statically from anywhere (e.g., SimplerModalField).
+     */
+    public static function requireImportMap(): void
+    {
+        // Choose dev or prod Vue build based on environment
+        $vueBuild = Director::isDev()
+            ? 'vue.esm-browser.js'       // Dev: warnings, devtools (~530kb)
+            : 'vue.esm-browser.prod.js'; // Prod: minified (~162kb)
+
+        HeadRequirements::import_map('vue', "restruct/silverstripe-simpler:client/dist/js/{$vueBuild}");
+    }
+
+    /**
+     * Include the modal JS file.
+     * Can be called statically from anywhere.
+     */
+    public static function requireModal(): void
+    {
+        Requirements::javascript('restruct/silverstripe-simpler:client/dist/js/simpler-modal.js', ['type' => 'module']);
+    }
 }

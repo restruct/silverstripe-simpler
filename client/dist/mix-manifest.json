@@ -1,5 +1,7 @@
 {
-    "/js/simpler-domevents.js": "/js/simpler-domevents.js",
     "/js/simpler-silverstripe.js": "/js/simpler-silverstripe.js",
-    "/styles/simpler-silverstripe.css": "/styles/simpler-silverstripe.css"
+    "/js/simpler-modal.js": "/js/simpler-modal.js",
+    "/styles/simpler-silverstripe.css": "/styles/simpler-silverstripe.css",
+    "/js/vue.esm-browser.js": "/js/vue.esm-browser.js",
+    "/js/vue.esm-browser.prod.js": "/js/vue.esm-browser.prod.js"
 }
