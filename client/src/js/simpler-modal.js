@@ -57,8 +57,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                         <div class="modal-body" id="simpleAdminModalBody" v-html="bodyHtml"></div>
                         <div class="modal-footer">
-                            <button v-if="closeBtn" type="button" class="btn btn-outline-secondary" data-dismiss="modal">{{ closeTxt }}</button>
-                            <button v-if="saveBtn" type="button" class="btn btn-primary font-icon-tick" id="simpleAdminModalPrimaryBtn" @click="handleSave">{{ saveTxt }}</button>
+                            <button v-show="closeBtn" type="button" class="btn btn-outline-secondary" data-dismiss="modal">{{ closeTxt }}</button>
+                            <button v-show="saveBtn" type="button" class="btn btn-primary font-icon-tick" id="simpleAdminModalPrimaryBtn" @click="handleSave">{{ saveTxt }}</button>
                         </div>
                     </div>
                 </div>
