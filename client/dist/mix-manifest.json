@@ -1,7 +1,3 @@
 {
-    "/js/simpler-silverstripe.js": "/js/simpler-silverstripe.js",
-    "/js/simpler-modal.js": "/js/simpler-modal.js",
-    "/styles/simpler-silverstripe.css": "/styles/simpler-silverstripe.css",
-    "/js/vue.esm-browser.js": "/js/vue.esm-browser.js",
-    "/js/vue.esm-browser.prod.js": "/js/vue.esm-browser.prod.js"
+    "/js/simpler-modal.js": "/js/simpler-modal.js"
 }

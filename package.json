@@ -2,13 +2,13 @@
   "name": "simpler-silverstripe-package-json",
   "description": "Simpler Silverstripe package json",
   "scripts": {
-    "dev": "mix watch",
-    "development": "mix",
+    "dev": "mix watch && mix --mix-config=webpack.mix.modal.js watch",
+    "development": "mix && mix --mix-config=webpack.mix.modal.js",
     "watch": "mix watch",
     "watch-poll": "mix watch -- --watch-options-poll=1000",
     "hot": "mix watch --hot",
-    "prod": "mix --production -- --watch",
-    "production": "mix --production"
+    "prod": "mix --production && mix --mix-config=webpack.mix.modal.js --production",
+    "production": "mix --production && mix --mix-config=webpack.mix.modal.js --production"
   },
   "author": "",
   "license": "MIT",
