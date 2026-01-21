@@ -22,8 +22,8 @@ class SimplerModalField extends PureModal
      */
     public static function set_requirements(): void
     {
-        // Modal uses Vue via import map
-        AdminExtension::requireImportMap();
+        // Modal uses Vue via import map - assert it was set on initial page load
+        AdminExtension::assertImportMapAvailable();
         AdminExtension::requireModal();
     }
 
@@ -150,14 +150,6 @@ class SimplerModalField extends PureModal
     }
 
     /**
-     * JSON-encoded config for data attribute
-     */
-    public function getModalConfigJSON(): string
-    {
-        return json_encode($this->getModalConfig(), JSON_HEX_APOS | JSON_HEX_QUOT);
-    }
-
-    /**
      * @param array<string,mixed> $properties
      * @return DBHTMLText
      */
@@ -165,14 +157,6 @@ class SimplerModalField extends PureModal
     {
         self::set_requirements();
 
-        // Handle button icon
-        $icon = $this->getButtonIcon();
-        if ($icon) {
-            $this->addExtraClass('font-icon');
-            $this->addExtraClass('font-icon-' . $icon);
-        }
-
-        // Use our own template
         return $this->renderWith(self::class);
     }
 }

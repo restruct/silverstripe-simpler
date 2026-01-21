@@ -110,14 +110,6 @@ class SimplerModalAction extends PureModalAction
     }
 
     /**
-     * JSON-encoded config for data attribute
-     */
-    public function getModalConfigJSON(): string
-    {
-        return json_encode($this->getModalConfig(), JSON_HEX_APOS | JSON_HEX_QUOT);
-    }
-
-    /**
      * Get button title with icon for template
      */
     public function getButtonTitle(): string

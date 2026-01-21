@@ -54,6 +54,8 @@ This module does not set `window.$` by default (anymore, to avoid conflicts). If
 
 ## 2. Vue 3 components (via import map, opt-in)
 
+**IMPORTANT:** If using Vue components (SimplerModalField, EditProtectedTextField, or your own), you MUST add AdminExtension to LeftAndMain. Components will trigger a warning if the import map is not available on initial page load.
+
 For using Vue 3 in your own code, add the extension:
 
 ```yaml
@@ -153,7 +155,7 @@ createApp({
 - Mix `<% if %>` SS conditionals with Vue `v-if` directives as needed
 - Use `{$T('Label')}` or `$fieldLabel('Name')` for translated strings in HTML
 
-> **Entwine compatibility note:** Prefer `v-show` over `v-if` for conditional elements. Vue 3 uses comment nodes (`<!--v-if-->`) as placeholders when `v-if` conditions are false. SilverStripe's Entwine library has a bug where its MutationObserver doesn't filter out comment nodes, causing `el.getAttribute is not a function` errors. Using `v-show` (which uses CSS `display:none`) avoids this issue.
+> **Entwine compatibility note:** Vue components inside CMS forms can trigger Entwine's MutationObserver bug (`el.getAttribute is not a function`). See "Known Issues" section below for details and workarounds.
 
 ## 3. Modal dialog (Vue 3 + BS modal, opt-in)
 
@@ -372,6 +374,16 @@ yarn install
 yarn run dev        # Watch mode
 yarn run production # Production build
 ```
+
+## Known Issues
+
+### Entwine + Vue Conflict
+
+Vue components in CMS forms can trigger `TypeError: el.getAttribute is not a function` due to Entwine's MutationObserver not filtering non-Element nodes.
+
+**Solution:** This module includes automatic error suppression in `simpler-silverstripe.js` that allows Vue to work in CMS forms.
+
+See [docs/ENTWINE_VUE_CONFLICT.md](docs/ENTWINE_VUE_CONFLICT.md) for details, alternatives, and future investigation options.
 
 ## Version notes
 
