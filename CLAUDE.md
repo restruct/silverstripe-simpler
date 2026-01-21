@@ -23,9 +23,11 @@ a-simpler/
 │   ├── Session.php                 # Static session accessor class
 │   ├── HeadRequirements.php        # Static helpers for head JS (import maps, early scripts)
 │   ├── AdminExtension.php          # Injects Vue 3 import map (opt-in)
+│   ├── EditProtectedTextField.php  # TextField with edit toggle (Vue)
 │   ├── SimplerModalField.php       # Drop-in PureModal replacement
 │   └── SimplerModalAction.php      # Drop-in PureModalAction replacement
 ├── templates/Restruct/Silverstripe/Simpler/
+│   ├── EditProtectedTextField.ss   # Vue-powered edit toggle field
 │   ├── SimplerModalField.ss        # Button with data-simpler-modal attribute
 │   └── SimplerModalAction.ss       # Action button with data-simpler-modal attribute
 ├── client/
@@ -63,6 +65,9 @@ SilverStripe\Admin\LeftAndMain:
     - 'restruct/silverstripe-simpler:client/dist/js/simpler-silverstripe.js'
 ```
 
+**IMPORTANT:** If using Vue components (SimplerModalField, EditProtectedTextField, or your own),
+you MUST add AdminExtension to LeftAndMain. Components will warn if import map is missing.
+
 **Opt-in configurations** (add to your project config):
 
 ```yaml
@@ -78,6 +83,10 @@ SilverStripe\Admin\LeftAndMain:
 SilverStripe\Admin\LeftAndMain:
   extensions:
     - Restruct\Silverstripe\Simpler\AdminExtension
+
+# To disable the import map check warning (for devs who know what they're doing):
+# Restruct\Silverstripe\Simpler\AdminExtension:
+#   skip_import_map_check: true
 
 # Option 3: Modal only via PHP classes
 # Just use SimplerModalField/SimplerModalAction - they auto-inject the import map
@@ -183,10 +192,21 @@ createApp({
 - `$Variable.JSON.RAW` for objects/arrays/booleans (raw JSON)
 - `"$Variable.JS"` for strings (JS-escaped, in quotes)
 - `$ID` or `$HexID` for unique element IDs
-- Mix `<% if %>` SS conditionals with Vue `v-if` as needed
+- Mix `<% if %>` SS conditionals with Vue `v-show` as needed
+- **Prefer `v-show` over `v-if`** - Vue's `v-if` creates comment nodes (`<!--v-if-->`) that trigger Entwine's MutationObserver bug (`el.getAttribute is not a function`)
 
 ### 3. Modal Dialog (opt-in)
 
+**Using modal without SimplerModalField** (for devs/modules who need direct access):
+```php
+// Ensure import map is available (or just configure AdminExtension on LeftAndMain)
+AdminExtension::assertImportMapAvailable();
+
+// Load modal JS
+Requirements::javascript('restruct/silverstripe-simpler:client/dist/js/simpler-modal.js', ['type' => 'module']);
+```
+
+**JavaScript API:**
 ```js
 // Basic modal
 simpler.modal.title = 'My Dialog';
@@ -264,7 +284,28 @@ Generic click handler in simpler-modal.js opens modal from data attribute.
 - `saveTxt` (string) - Save button text
 - `static` (bool) - Prevent closing via backdrop click or Escape
 
-### 4. Static Session Helpers
+### 4. EditProtectedTextField
+
+A TextField that starts in read-only mode with an edit button. Uses Entwine for proper CMS integration.
+
+```php
+use Restruct\Silverstripe\Simpler\EditProtectedTextField;
+
+// In getCMSFields():
+$fields->replaceField('SensitiveField',
+    EditProtectedTextField::create('SensitiveField', 'Sensitive Field Label')
+);
+```
+
+Features:
+- Shows value as readonly input with edit button (font-icon-edit-write)
+- Click edit → input becomes editable, button changes to cancel (font-icon-cancel)
+- If value is modified (dirty), button changes to revert (font-icon-back-in-time)
+- Click cancel/revert → resets value and returns to readonly mode
+
+Uses Entwine (bundled in simpler-silverstripe.js) - works with dynamic/AJAX content.
+
+### 5. Static Session Helpers
 
 ```php
 use Restruct\Silverstripe\Simpler\Session;
@@ -275,7 +316,7 @@ Session::clear('key');
 Session::clearAll();
 ```
 
-### 5. HeadRequirements (import maps, early scripts)
+### 6. HeadRequirements (import maps, early scripts)
 
 For scripts that must be in `<head>` (import maps, early config):
 
@@ -304,6 +345,16 @@ Also available as template globals: `$HeadReq_importMap()`, `$HeadReq_js()`, `$H
 - **Bootstrap 4 modal** jQuery plugin bundled in simpler-modal.js
 - **Vue 3** bundled with template compiler in simpler-modal.js
 - **Import map** auto-switches between dev/prod Vue based on `Director::isDev()`
+
+## Known Issues
+
+### Entwine + Vue Conflict
+
+Vue components in CMS forms can trigger `TypeError: el.getAttribute is not a function` due to Entwine's MutationObserver not filtering non-Element nodes.
+
+**Solution:** Error suppression implemented in `simpler-silverstripe.js` - Vue components now work in CMS forms.
+
+See [docs/ENTWINE_VUE_CONFLICT.md](docs/ENTWINE_VUE_CONFLICT.md) for full details, what was tried, alternatives, and future investigation options.
 
 ## Version Notes
 

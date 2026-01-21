@@ -6,6 +6,19 @@
 // NOTE: This module does NOT set window.$ - add it yourself if needed:
 //   Requirements::customScript('window.$ = window.$ || window.jQuery;', 'jquery-alias');
 
+//
+// Entwine bug workaround: suppress "getAttribute is not a function" errors
+// Entwine's MutationObserver doesn't filter non-Element nodes (comments, text)
+// which causes errors when Vue modifies the DOM. This silences that specific error.
+//
+window.addEventListener('error', (e) => {
+    if (e.message && e.message.includes('getAttribute is not a function')) {
+        console.debug('[Simpler] Suppressed Entwine/Vue conflict:', e.message);
+        e.preventDefault();
+        return true;
+    }
+});
+
 import jQuery from 'jquery';
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -116,4 +129,52 @@ const FormWrapper = (Form) => (
 // Register transformation on SilverStripe Form component
 Injector.transform('simpler-form-mount-emitter', (updater) => {
     updater.component('Form', FormWrapper);
+});
+
+//
+// EditProtectedTextField - Entwine handler
+//
+jQuery.entwine('simpler', function($) {
+    $('.edit-protected-field').entwine({
+        onmatch: function() {
+            const container = this;
+            const input = container.find('input[name]');
+            const editBtn = container.find('.edit-btn');
+            const cancelBtn = container.find('.cancel-btn');
+            const originalValue = container.data('original-value') || '';
+
+            function updateCancelIcon() {
+                const isDirty = input.val() !== originalValue;
+                cancelBtn
+                    .toggleClass('font-icon-cancel', !isDirty)
+                    .toggleClass('font-icon-back-in-time', isDirty)
+                    .attr('title', isDirty ? 'Revert' : 'Cancel');
+            }
+
+            editBtn.on('click.editprotected', function() {
+                input.prop('readonly', false).removeClass('text-muted');
+                editBtn.hide();
+                cancelBtn.show();
+                updateCancelIcon();
+                input.focus().select();
+            });
+
+            cancelBtn.on('click.editprotected', function() {
+                input.val(originalValue).prop('readonly', true);
+                if (!originalValue) input.addClass('text-muted');
+                editBtn.show();
+                cancelBtn.hide();
+            });
+
+            input.on('input.editprotected', updateCancelIcon);
+
+            this._super();
+        },
+        onunmatch: function() {
+            this.find('.edit-btn').off('.editprotected');
+            this.find('.cancel-btn').off('.editprotected');
+            this.find('input[name]').off('.editprotected');
+            this._super();
+        }
+    });
 });
