@@ -5,6 +5,9 @@ namespace Restruct\Silverstripe\Simpler;
 use LeKoala\PureModal\PureModal;
 use SilverStripe\ORM\FieldType\DBHTMLText;
 
+// Only define class if parent exists (pure-modal is an optional dependency)
+if (class_exists(PureModal::class)) {
+
 /**
  * Drop-in replacement for PureModal that uses simpler.modal for rendering
  * instead of the CSS checkbox mechanism.
@@ -168,3 +171,5 @@ class SimplerModalField extends PureModal
         return $this->renderWith(self::class);
     }
 }
+
+} // end if class_exists
