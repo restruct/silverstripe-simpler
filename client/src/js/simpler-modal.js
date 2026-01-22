@@ -16,9 +16,9 @@ const modalDefaults = {
     show: false,
     title: "...",
     bodyHtml: "...",
-    closeBtn: true,
+    closeBtn: false, // Footer close button hidden by default (use X in header)
     closeTxt: "Close",
-    saveBtn: true,
+    saveBtn: false,  // Footer save button hidden by default
     saveTxt: "Save",
     static: false, // Set to true to prevent closing via backdrop click or Escape key
     onSave: null,  // Callback function for save button
