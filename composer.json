@@ -11,6 +11,9 @@
     "require": {
         "silverstripe/framework": "^4 || ^5"
     },
+    "suggest": {
+        "lekoala/silverstripe-pure-modal": "Required when using SimplerModalField or SimplerModalAction"
+    },
     "autoload": {
         "psr-4": {
             "Restruct\\Silverstripe\\Simpler\\": "src/"

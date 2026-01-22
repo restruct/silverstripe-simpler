@@ -222,6 +222,9 @@ All properties reset to defaults when the modal gets closed.
 
 `SimplerModalField` and `SimplerModalAction` extend `lekoala/silverstripe-pure-modal` classes but render via `simpler.modal` instead of the CSS checkbox mechanism.
 
+> **Requires:** `lekoala/silverstripe-pure-modal` must be installed to use these classes.
+> Install via: `composer require lekoala/silverstripe-pure-modal`
+
 ### How it differs from PureModal
 
 PureModal renders inside the CMS form (as FormField), which means forms in modal become nested forms (invalid HTML). PureModal elegantly works around this using iframes.
