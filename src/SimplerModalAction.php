@@ -9,6 +9,9 @@ use SilverStripe\Forms\Form;
 use SilverStripe\Forms\FormAction;
 use SilverStripe\ORM\FieldType\DBHTMLText;
 
+// Only define class if parent exists (pure-modal is an optional dependency)
+if (class_exists(PureModalAction::class)) {
+
 /**
  * Drop-in replacement for PureModalAction that uses simpler.modal.
  *
@@ -139,3 +142,5 @@ class SimplerModalAction extends PureModalAction
         return $this->renderWith(self::class);
     }
 }
+
+} // end if class_exists

@@ -159,7 +159,9 @@ createApp({
 
 ## 3. Modal dialog (Vue 3 + BS modal, opt-in)
 
-> **Note:** The Vue import map is automatically injected when using SimplerModalField/Action PHP classes.
+![Modal in action](docs/modal-screenshot.png)
+
+> **Note:** The Vue import map is automatically injected when using SimplerModalField/Action PHP classes.  
 > Manual setup only needed if using `simpler.modal` directly from JavaScript.
 
 To use `simpler.modal` from your own JS, you need both the Vue import map and simpler-modal.js:
@@ -194,9 +196,9 @@ simpler.modal.show = true;
 ```js
 simpler.modal.title = 'Confirm Action';
 simpler.modal.bodyHtml = '<p>Are you sure?</p>';
-simpler.modal.closeBtn = true;      // Show close button (default: true)
+simpler.modal.closeBtn = true;      // Show close button (default: false)
 simpler.modal.closeTxt = 'Cancel';  // Close button text (default: "Close")
-simpler.modal.saveBtn = true;       // Show primary button (default: true)
+simpler.modal.saveBtn = true;       // Show primary button (default: false)
 simpler.modal.saveTxt = 'Confirm';  // Primary button text (default: "Save")
 simpler.modal.static = true;        // Prevent closing via backdrop/Escape (default: false)
 simpler.modal.size = 'lg';          // 'sm', 'lg', 'xl' or custom like '800px', '90vw' (default: null)
@@ -222,8 +224,10 @@ All properties reset to defaults when the modal gets closed.
 
 `SimplerModalField` and `SimplerModalAction` extend `lekoala/silverstripe-pure-modal` classes but render via `simpler.modal` instead of the CSS checkbox mechanism.
 
-> **Requires:** `lekoala/silverstripe-pure-modal` must be installed to use these classes.
-> Install via: `composer require lekoala/silverstripe-pure-modal`
+> **Requires:** `lekoala/silverstripe-pure-modal`  
+> 
+> **PureModal must be manually installed to use these classes**  
+> Install via: `composer require lekoala/silverstripe-pure-modal`  
 
 ### How it differs from PureModal
 
@@ -370,6 +374,22 @@ SilverStripe\Admin\LeftAndMain:
 ```
 
 ## 8. Development
+
+### Local git checkout
+
+When developing this module locally (checked out as git repo instead of installed via composer), you need to add the autoload path to your project's `composer.json`:
+
+```json
+"autoload": {
+    "psr-4": {
+        "Restruct\\Silverstripe\\Simpler\\": "_git_simpler/src/"
+    }
+}
+```
+
+Then run `composer dump-autoload`. This is required because composer doesn't automatically discover classes in local module directories - it only knows about paths defined in its autoload config.
+
+### Building assets
 
 ```bash
 cd silverstripe-simpler

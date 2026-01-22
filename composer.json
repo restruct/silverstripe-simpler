@@ -9,8 +9,10 @@
     "license": "MIT",
     "authors": [ { "name": "Restruct", "email": "dev@restruct.nl", "homepage": "https://restruct.nl" } ],
     "require": {
-        "silverstripe/framework": "^6",
-        "lekoala/silverstripe-pure-modal": "^1.0"
+        "silverstripe/framework": "^6"
+    },
+    "suggest": {
+        "lekoala/silverstripe-pure-modal": "Required for SimplerModalField and SimplerModalAction"
     },
     "autoload": {
         "psr-4": {
