@@ -70,6 +70,14 @@ class SimplerModalAction extends PureModalAction
     }
 
     /**
+     * Get modal config as JSON string for use in template with .ATT
+     */
+    public function getModalConfigJson(): string
+    {
+        return json_encode($this->getModalConfig(), JSON_HEX_APOS | JSON_HEX_QUOT);
+    }
+
+    /**
      * Get the dialog title
      */
     protected function getDialogTitle(): ?string

@@ -32,7 +32,7 @@ class AdminExtension extends Extension
      */
     private static bool $skip_import_map_check = false;
 
-    public function init(): void
+    public function onAfterInit(): void
     {
         self::$importMapInitialized = true;
         self::requireImportMap();

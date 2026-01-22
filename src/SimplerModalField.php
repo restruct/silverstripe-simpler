@@ -53,7 +53,7 @@ class SimplerModalField extends PureModal
     /**
      * Whether to show the close button in modal footer
      */
-    protected bool $closeBtn = true;
+    protected bool $closeBtn = false;
 
     public function setIframeHeight(string $height): self
     {
@@ -147,6 +147,14 @@ class SimplerModalField extends PureModal
         }
 
         return $config;
+    }
+
+    /**
+     * Get modal config as JSON string for use in template with .ATT
+     */
+    public function getModalConfigJson(): string
+    {
+        return json_encode($this->getModalConfig(), JSON_HEX_APOS | JSON_HEX_QUOT);
     }
 
     /**
