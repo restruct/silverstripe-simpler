@@ -1,11 +1,10 @@
 // Simpler Silverstripe - Modal (opt-in)
-// - Bootstrap 5 modal (SS6) - uses framework's Bootstrap, no jQuery required
+// - Bootstrap 5 modal (SS6) - no jQuery required
 // - Vue 3 reactive modal app
 // Requires simpler-silverstripe.js to be loaded first (provides window.simpler)
 
-// Use framework's Bootstrap 5 (already loaded in SS6 admin)
-const Modal = window.bootstrap?.Modal;
-
+// Import Bootstrap Modal directly (SS6 uses Reactstrap, doesn't expose vanilla Bootstrap)
+import Modal from 'bootstrap/js/dist/modal';
 import { createApp, reactive } from 'vue';
 
 // Default modal state (used for reset on close)
