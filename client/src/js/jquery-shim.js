@@ -21,8 +21,8 @@
  * `window.jQuery` at runtime.
  *
  * WHO USES THIS:
- * - Bootstrap's modal plugin (internally imports 'jquery')
- * - simpler-silverstripe.js (imports 'jquery' for React Injector integration)
+ * - simpler-silverstripe.js (imports 'jquery' for Entwine integration)
+ * - Note: Bootstrap 5 modal (SS6) doesn't need jQuery, only BS4 (SS5) did
  *
  * This shim does NOT set window.$ - add that yourself if needed:
  *   Requirements::customScript('window.$ = window.$ || window.jQuery;', 'jquery-alias');
