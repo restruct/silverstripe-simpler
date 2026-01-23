@@ -10,12 +10,12 @@ Makes SilverStripe Admin development simpler by re-introducing traditional basic
 | **HeadRequirements** - Import maps and early scripts in `<head>` | - | Always | PHP + templates |
 | **DOM Events** - `DOMNodesInserted`/`DOMNodesRemoved` for dynamic content | ~5kb | Always | Core bundle |
 | **Vue 3 Import Map** - Use Vue in your own ES modules | ~162kb | Opt-in | AdminExtension |
-| **Modal Dialog** - Bootstrap 4 modal via `simpler.modal` | ~17kb | Opt-in | Requires import map |
+| **Modal Dialog** - Bootstrap modal via `simpler.modal` | ~24kb | Opt-in | Requires import map |
 
 **Total sizes:**
 - DOM events only: ~5kb (always loaded)
 - Import map with Vue only: ~5kb + 162kb = **~167kb** (for your own Vue components)
-- Modal via PHP: ~5kb + 162kb + 17kb = **~184kb** (import map auto-injected)
+- Modal via PHP: ~5kb + 162kb + 24kb = **~191kb** (import map auto-injected)
 - Modal via JS config: same, but requires AdminExtension in config
 
 ## 1. DOM events (always loaded)
@@ -157,7 +157,7 @@ createApp({
 
 > **Entwine compatibility note:** Vue components inside CMS forms can trigger Entwine's MutationObserver bug (`el.getAttribute is not a function`). See "Known Issues" section below for details and workarounds.
 
-## 3. Modal dialog (Vue 3 + BS modal, opt-in)
+## 3. Modal dialog (Vue 3 + Bootstrap modal, opt-in)
 
 ![Modal in action](docs/modal-screenshot.png)
 
