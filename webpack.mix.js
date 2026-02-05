@@ -23,3 +23,4 @@ mix.js('client/src/js/simpler-silverstripe.js', 'js').webpackConfig({
         'lib/Injector': 'Injector',
     }
 });
+

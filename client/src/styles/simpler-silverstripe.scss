@@ -8,3 +8,10 @@
     margin-bottom: 0;
   }
 }
+
+// GridField modal button - override default .action.btn padding/margins
+// The .action class is needed to prevent GridField row click (see GridField.js onclick handler)
+.grid-field td > .action.btn[data-simpler-modal] {
+  padding: .25rem .5rem;  // Bootstrap .btn-sm padding
+  margin-top: -1.4rem;
+}
