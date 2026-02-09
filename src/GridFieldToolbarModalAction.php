@@ -2,6 +2,7 @@
 
 namespace Restruct\Silverstripe\Simpler;
 
+use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\GridField\GridField;
 use SilverStripe\Forms\GridField\GridField_ActionProvider;
@@ -52,6 +53,8 @@ use SilverStripe\ORM\FieldType\DBHTMLText;
  */
 class GridFieldToolbarModalAction implements GridField_HTMLProvider, GridField_ActionProvider
 {
+    use Injectable;
+
     protected string $actionName;
     protected string $buttonLabel;
     protected string $targetFragment = 'buttons-before-left';

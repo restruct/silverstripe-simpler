@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+    bootstrap="vendor/silverstripe/framework/tests/bootstrap.php"
+    colors="true"
+>
+    <testsuites>
+        <testsuite name="Default">
+            <directory>tests</directory>
+        </testsuite>
+    </testsuites>
+    <php>
+        <env name="SS_ENVIRONMENT_TYPE" value="dev"/>
+        <env name="SS_DATABASE_CLASS" value="SilverStripe\SQLite3\SQLite3Database"/>
+        <env name="SS_DATABASE_NAME" value=":memory:"/>
+        <env name="SS_DATABASE_SERVER" value=""/>
+        <env name="SS_DATABASE_MEMORY" value="1"/>
+    </php>
+</phpunit>
