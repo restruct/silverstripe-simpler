@@ -20,12 +20,14 @@ Makes SilverStripe Admin development simpler by re-introducing traditional basic
 a-simpler/
 ├── _config/config.yml              # Auto-loads core, opt-in for modal/import map
 ├── src/
-│   ├── Session.php                 # Static session accessor class
-│   ├── HeadRequirements.php        # Static helpers for head JS (import maps, early scripts)
-│   ├── AdminExtension.php          # Injects Vue 3 import map (opt-in)
-│   ├── EditProtectedTextField.php  # TextField with edit toggle (Vue)
-│   ├── SimplerModalField.php       # Drop-in PureModal replacement
-│   └── SimplerModalAction.php      # Drop-in PureModalAction replacement
+│   ├── Session.php                     # Static session accessor class
+│   ├── HeadRequirements.php            # Static helpers for head JS (import maps, early scripts)
+│   ├── AdminExtension.php              # Injects Vue 3 import map (opt-in)
+│   ├── EditProtectedTextField.php      # TextField with edit toggle (Vue)
+│   ├── SimplerModalField.php           # Drop-in PureModal replacement
+│   ├── SimplerModalAction.php          # Drop-in PureModalAction replacement
+│   ├── GridFieldToolbarModalAction.php # GridField toolbar button with modal form
+│   └── GridFieldModalButton.php        # GridField column button with modal (per-row)
 ├── templates/Restruct/Silverstripe/Simpler/
 │   ├── EditProtectedTextField.ss   # Vue-powered edit toggle field
 │   ├── SimplerModalField.ss        # Button with data-simpler-modal attribute
@@ -283,6 +285,85 @@ Generic click handler in simpler-modal.js opens modal from data attribute.
 - `saveBtn` (bool) - Show save/primary button
 - `saveTxt` (string) - Save button text
 - `static` (bool) - Prevent closing via backdrop click or Escape
+
+### 3c. GridField Modal Components
+
+Two GridField-specific modal components for different use cases:
+
+#### GridFieldToolbarModalAction (toolbar buttons)
+
+For toolbar buttons that open a modal with form fields, submitting through GridField action routing:
+
+```php
+use Restruct\Silverstripe\Simpler\GridFieldToolbarModalAction;
+
+// Extend and override handleAction():
+class MyGridFieldAction extends GridFieldToolbarModalAction
+{
+    public function __construct()
+    {
+        parent::__construct('myaction', 'Do Something');
+        $this->setDialogTitle('Configure Action');
+        $this->setSubmitLabel('Apply');
+        $this->setButtonIcon('rocket');
+        $this->setFieldList(FieldList::create([
+            DropdownField::create('Option', 'Choose', $options),
+            NumericField::create('Count', 'How many'),
+        ]));
+    }
+
+    public function handleAction(GridField $gridField, $actionName, $arguments, $data)
+    {
+        if ($actionName !== 'myaction') {
+            return;
+        }
+        $option = $data['Option'] ?? null;
+        $count = (int) ($data['Count'] ?? 1);
+        // Do something with the form data...
+    }
+}
+
+// Add to GridField config:
+$config->addComponent(new MyGridFieldAction());
+```
+
+Key difference from SimplerModalAction:
+- **SimplerModalAction** is for DataObject edit forms (FieldList in form actions area)
+- **GridFieldToolbarModalAction** is for GridField toolbars (action routing via StateID)
+
+#### GridFieldModalButton (row buttons)
+
+For per-row buttons in a GridField column that open a modal:
+
+```php
+use Restruct\Silverstripe\Simpler\GridFieldModalButton;
+
+class MyDetailButton extends GridFieldModalButton
+{
+    protected function getButtonLabel(DataObject $record): string
+    {
+        return 'Details';
+    }
+
+    protected function getModalTitle(DataObject $record): string
+    {
+        return 'Details for ' . $record->Title;
+    }
+
+    protected function getModalContent(DataObject $record): string
+    {
+        return '<p>' . htmlspecialchars($record->Description) . '</p>';
+    }
+
+    protected function shouldShowButton(DataObject $record): bool
+    {
+        return $record->canView();
+    }
+}
+
+// Add to GridField config:
+$config->addComponent(new MyDetailButton());
+```
 
 ### 4. EditProtectedTextField
 
