@@ -101,11 +101,27 @@ class GridFieldToolbarModalAction implements GridField_HTMLProvider, GridField_A
     }
 
     /**
+     * Alias for setDialogTitle() for API consistency
+     */
+    public function setModalTitle(string $title): self
+    {
+        return $this->setDialogTitle($title);
+    }
+
+    /**
      * Get the dialog title
      */
     public function getDialogTitle(): string
     {
         return $this->dialogTitle;
+    }
+
+    /**
+     * Alias for getDialogTitle() for API consistency
+     */
+    public function getModalTitle(): string
+    {
+        return $this->getDialogTitle();
     }
 
     /**

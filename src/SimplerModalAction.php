@@ -30,6 +30,11 @@ class SimplerModalAction extends PureModalAction
     protected ?string $modalSize = null;
 
     /**
+     * Separate modal title (independent from submit button text)
+     */
+    protected ?string $modalTitle = null;
+
+    /**
      * Set modal size: 'sm', 'lg', 'xl' for Bootstrap sizes, or custom CSS value like '800px', '90vw'
      */
     public function setModalSize(string $size): self
@@ -41,6 +46,28 @@ class SimplerModalAction extends PureModalAction
     public function getModalSize(): ?string
     {
         return $this->modalSize;
+    }
+
+    /**
+     * Set the modal dialog title independently from the submit button text.
+     *
+     * This allows for a descriptive title like "Generate questions with Claude"
+     * while keeping the submit button concise like "Generate".
+     *
+     * @param string $title The modal dialog title
+     */
+    public function setModalTitle(string $title): self
+    {
+        $this->modalTitle = $title;
+        return $this;
+    }
+
+    /**
+     * Get the modal title
+     */
+    public function getModalTitle(): ?string
+    {
+        return $this->modalTitle;
     }
 
     /**
@@ -81,11 +108,13 @@ class SimplerModalAction extends PureModalAction
     }
 
     /**
-     * Get the dialog title
+     * Get the dialog title.
+     *
+     * Priority: modalTitle > dialogButtonTitle > title
      */
     protected function getDialogTitle(): ?string
     {
-        return $this->dialogButtonTitle ?: $this->title;
+        return $this->modalTitle ?: $this->dialogButtonTitle ?: $this->title;
     }
 
     /**

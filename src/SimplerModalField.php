@@ -86,9 +86,22 @@ class SimplerModalField extends PureModal
         return $this;
     }
 
+    /**
+     * Alias for setDialogTitle() for API consistency with SimplerModalAction
+     */
+    public function setModalTitle(string $title): self
+    {
+        return $this->setDialogTitle($title);
+    }
+
     public function getDialogTitle(): ?string
     {
         return $this->dialogTitle;
+    }
+
+    public function getModalTitle(): ?string
+    {
+        return $this->getDialogTitle();
     }
 
     /**

@@ -12,6 +12,7 @@ Makes SilverStripe Admin development simpler by re-introducing traditional basic
 | **Vue 3 Import Map** - Use Vue in your own ES modules | ~162kb | Opt-in | AdminExtension |
 | **Modal Dialog** - Bootstrap 4 modal via `simpler.modal` | ~17kb | Opt-in | Requires import map |
 | **GridField Modals** - Toolbar/row buttons with modal forms | - | Opt-in | PHP only, uses Modal Dialog |
+| **GridField Toggle** - Row buttons to cycle field values | - | Opt-in | PHP only, no dependencies |
 
 **Total sizes:**
 - DOM events only: ~5kb (always loaded)
@@ -388,6 +389,59 @@ class MyDetailButton extends GridFieldModalButton
 
 // Add to GridField config:
 $config->addComponent(new MyDetailButton());
+```
+
+### GridFieldToggleFieldButton (row toggle buttons)
+
+For per-row buttons that cycle a field through values (boolean or multi-state):
+
+```php
+use Restruct\Silverstripe\Simpler\GridFieldToggleFieldButton;
+use Restruct\Silverstripe\Simpler\GridFieldToggleIsActiveButton;
+
+// Simple boolean toggle for IsActive field (pre-configured)
+$config->addComponent(GridFieldToggleIsActiveButton::create());
+
+// Generic boolean toggle for any field
+$config->addComponent(GridFieldToggleFieldButton::create('IsPublished'));
+
+// Multi-state toggle (cycles through values in order)
+$config->addComponent(
+    GridFieldToggleFieldButton::create('Status')
+        ->setStates([
+            'draft' => ['icon' => 'edit', 'title' => 'Submit for Review'],
+            'review' => ['icon' => 'eye', 'title' => 'Publish'],
+            'published' => ['icon' => 'check-mark', 'title' => 'Archive'],
+            'archived' => ['icon' => 'archive', 'title' => 'Reset to Draft'],
+        ])
+        ->setConfirmMessage('Change status?')
+);
+```
+
+**Advanced options:**
+
+```php
+GridFieldToggleFieldButton::create('IsActive')
+    // Custom state rendering via callback
+    ->setStateRenderer(function(DataObject $record, $currentValue) {
+        return [
+            'icon' => $record->getStatusIcon(),
+            'title' => $record->getNextStatusLabel(),
+            'buttonClass' => $currentValue ? 'text-success' : 'text-muted',
+        ];
+    })
+    // Visibility check
+    ->setShouldShow(fn($record) => $record->canEdit())
+    // Custom toggle logic (called before save)
+    ->setToggleAction(function(DataObject $record, $newValue) {
+        $record->IsActive = $newValue;
+        $record->StatusChangedDate = DBDatetime::now();
+        $record->StatusChangedBy = Security::getCurrentUser()->ID;
+    })
+    // Confirmation dialog
+    ->setConfirmMessage('Are you sure?')
+    // Use writeWithoutVersion() for versioned records (default: true)
+    ->setWriteWithoutVersion(true);
 ```
 
 ## 6. Static Session helpers
