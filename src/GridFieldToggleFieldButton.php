@@ -69,6 +69,8 @@ class GridFieldToggleFieldButton implements GridField_ColumnProvider, GridField_
         $this->fieldName = $fieldName;
 
         // Default boolean states
+        // Note: PHP converts boolean array keys to integers (false=0, true=1)
+        // The getStateConfig() method uses loose comparison to handle both
         $this->states = [
             false => [
                 'icon' => 'check-mark-circle',
