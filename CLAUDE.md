@@ -27,7 +27,9 @@ a-simpler/
 │   ├── SimplerModalField.php           # Drop-in PureModal replacement
 │   ├── SimplerModalAction.php          # Drop-in PureModalAction replacement
 │   ├── GridFieldToolbarModalAction.php # GridField toolbar button with modal form
-│   └── GridFieldModalButton.php        # GridField column button with modal (per-row)
+│   ├── GridFieldModalButton.php        # GridField column button with modal (per-row)
+│   ├── GridFieldToggleFieldButton.php  # GridField row button to toggle field values
+│   └── GridFieldToggleIsActiveButton.php # Pre-configured toggle for IsActive field
 ├── templates/Restruct/Silverstripe/Simpler/
 │   ├── EditProtectedTextField.ss   # Vue-powered edit toggle field
 │   ├── SimplerModalField.ss        # Button with data-simpler-modal attribute
@@ -363,6 +365,44 @@ class MyDetailButton extends GridFieldModalButton
 
 // Add to GridField config:
 $config->addComponent(new MyDetailButton());
+```
+
+#### GridFieldToggleFieldButton (row toggle buttons)
+
+For per-row buttons that cycle a field through values:
+
+```php
+use Restruct\Silverstripe\Simpler\GridFieldToggleFieldButton;
+use Restruct\Silverstripe\Simpler\GridFieldToggleIsActiveButton;
+
+// Pre-configured for IsActive boolean field
+$config->addComponent(GridFieldToggleIsActiveButton::create());
+
+// Generic boolean toggle
+$config->addComponent(GridFieldToggleFieldButton::create('IsPublished'));
+
+// Multi-state cycling
+$config->addComponent(
+    GridFieldToggleFieldButton::create('Status')
+        ->setStates([
+            'draft' => ['icon' => 'edit', 'title' => 'Submit for Review'],
+            'review' => ['icon' => 'eye', 'title' => 'Publish'],
+            'published' => ['icon' => 'check-mark', 'title' => 'Archive'],
+        ])
+        ->setConfirmMessage('Change status?')
+);
+
+// With callbacks
+GridFieldToggleFieldButton::create('IsActive')
+    ->setStateRenderer(fn($record, $value) => [
+        'icon' => $record->getStatusIcon(),
+        'title' => $record->getNextStatusLabel(),
+    ])
+    ->setShouldShow(fn($record) => $record->canEdit())
+    ->setToggleAction(function($record, $newValue) {
+        $record->IsActive = $newValue;
+        $record->ModifiedDate = DBDatetime::now();
+    });
 ```
 
 ### 4. EditProtectedTextField
