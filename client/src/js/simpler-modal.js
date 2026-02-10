@@ -191,9 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (container) {
                 window.simpler.progressIndicator.start({
                     duration: 30,
-                    spinnerThreshold: 7,
                     message: 'Processing',
-                    container: null, // Already inserted HTML
                     onComplete: () => {
                         // Extract GridField name and reload
                         const gridFieldName = gridFieldUrl.split('/field/')[1]?.split('/')[0];
@@ -250,7 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /**
  * Progress indicator for long-running operations
- * Shows spinner for short durations (<7s), progress bar for longer
+ * Shows a progress bar that fills up over time, then goes into indefinite mode
  *
  * Usage:
  *   simpler.progressIndicator.start({ duration: 30, onComplete: () => location.reload() });
@@ -263,22 +261,15 @@ window.simpler.progressIndicator = {
     _options: null,
     _element: null,
 
-    // HTML template for progress indicator
+    // HTML template for progress indicator (progress bar only, no spinner)
     getHtml(message = 'Processing') {
         return `
             <div class="simpler-progress-indicator text-center p-3">
-                <div class="simpler-progress-spinner mb-3">
-                    <div class="spinner-border" role="status">
-                        <span class="sr-only">${message}</span>
-                    </div>
+                <div class="progress mb-2">
+                    <div class="progress-bar" role="progressbar" style="width: 0%"
+                         aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
                 </div>
-                <div class="simpler-progress-bar-container" style="display: none;">
-                    <div class="progress mb-2">
-                        <div class="progress-bar" role="progressbar" style="width: 0%"
-                             aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
-                    </div>
-                    <small class="text-muted simpler-progress-message">${message}</small>
-                </div>
+                <small class="text-muted simpler-progress-message">${message}</small>
             </div>
         `;
     },
@@ -287,7 +278,6 @@ window.simpler.progressIndicator = {
      * Start progress indicator
      * @param {Object} options
      * @param {number} options.duration - Expected duration in seconds (default: 30)
-     * @param {number} options.spinnerThreshold - Show spinner instead of progress bar if duration < this (default: 7)
      * @param {string} options.message - Message to display (default: 'Processing')
      * @param {Function} options.onComplete - Callback when complete() is called and animation finishes
      */
@@ -296,35 +286,14 @@ window.simpler.progressIndicator = {
 
         this._options = {
             duration: options.duration || 30,
-            spinnerThreshold: options.spinnerThreshold || 7,
             message: options.message || 'Processing',
             onComplete: options.onComplete || null,
         };
 
         this._startTime = Date.now();
 
-        // For short durations, just show spinner (don't switch to progress bar)
-        if (this._options.duration < this._options.spinnerThreshold) {
-            return;
-        }
-
-        // Show progress bar after spinnerThreshold seconds
-        setTimeout(() => {
-            if (!this._startTime) return; // Already stopped
-
-            const barContainer = this._element?.querySelector('.simpler-progress-bar-container');
-            const spinnerEl = this._element?.querySelector('.simpler-progress-spinner');
-
-            if (barContainer) {
-                barContainer.style.display = 'block';
-            }
-            if (spinnerEl) {
-                spinnerEl.style.display = 'none';
-            }
-
-            // Start progress animation
-            this._interval = setInterval(() => this._updateProgress(), 100);
-        }, this._options.spinnerThreshold * 1000);
+        // Start progress animation immediately
+        this._interval = setInterval(() => this._updateProgress(), 100);
     },
 
     /**
@@ -377,15 +346,7 @@ window.simpler.progressIndicator = {
         this._interval = null;
 
         const progressBar = this._element.querySelector('.progress-bar');
-        const barContainer = this._element.querySelector('.simpler-progress-bar-container');
-        const spinnerEl = this._element.querySelector('.simpler-progress-spinner');
         const messageEl = this._element.querySelector('.simpler-progress-message');
-
-        // Show progress bar if not visible (for fast completions)
-        if (barContainer && barContainer.style.display === 'none') {
-            barContainer.style.display = 'block';
-            if (spinnerEl) spinnerEl.style.display = 'none';
-        }
 
         if (progressBar) {
             // Remove indefinite mode, add success color
