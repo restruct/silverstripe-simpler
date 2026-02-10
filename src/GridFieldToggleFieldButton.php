@@ -113,7 +113,12 @@ class GridFieldToggleFieldButton implements GridField_ColumnProvider, GridField_
      * ]
      * ```
      *
-     * @param array $states Map of value => ['icon' => string, 'title' => string, 'buttonClass' => string]
+     * Optional 'iconPrefix' key: 'ss' for font-icon- (default), 'bs' for bs-icon-, false for no prefix:
+     * ```php
+     * ['icon' => 'file-pdf', 'iconPrefix' => 'bs', 'title' => 'View PDF']
+     * ```
+     *
+     * @param array $states Map of value => ['icon' => string, 'title' => string, 'buttonClass' => string, 'iconPrefix' => string|false]
      */
     public function setStates(array $states): static
     {
@@ -139,6 +144,7 @@ class GridFieldToggleFieldButton implements GridField_ColumnProvider, GridField_
      * ->setStateRenderer(function(DataObject $record, $currentValue) {
      *     return [
      *         'icon' => $record->getStatusIcon(),
+     *         'iconPrefix' => 'bs',  // 'ss' (default), 'bs', or false
      *         'title' => $record->getNextStatusLabel(),
      *         'buttonClass' => $record->getStatusClass(),
      *     ];
@@ -437,8 +443,16 @@ class GridFieldToggleFieldButton implements GridField_ColumnProvider, GridField_
         $config = $this->getStateConfig($record, $value);
 
         $icon = $config['icon'] ?? 'menu-toggled';
+        $iconPrefix = $config['iconPrefix'] ?? 'ss';
         $title = $config['title'] ?? 'Toggle';
         $buttonClass = $config['buttonClass'] ?? '';
+
+        // Build icon class based on prefix
+        $iconClass = match ($iconPrefix) {
+            'ss' => 'font-icon-' . $icon,
+            'bs' => 'bs-icon-' . $icon,
+            false => $icon,
+        };
 
         $actionName = 'togglefield_' . strtolower($this->fieldName);
 
@@ -449,8 +463,8 @@ class GridFieldToggleFieldButton implements GridField_ColumnProvider, GridField_
             $actionName,
             ['RecordID' => $record->ID]
         )
-            ->addExtraClass("action--toggle btn--icon-md font-icon-{$icon} btn--no-text grid-field__icon-action action-menu--handled {$buttonClass}")
-            ->setAttribute('classNames', "action--toggle font-icon-{$icon} {$buttonClass}")
+            ->addExtraClass("action--toggle btn--icon-md {$iconClass} btn--no-text grid-field__icon-action action-menu--handled {$buttonClass}")
+            ->setAttribute('classNames', "action--toggle {$iconClass} {$buttonClass}")
             ->setDescription($title)
             ->setAttribute('aria-label', $title)
             ->setAttribute('title', $title);

@@ -26,7 +26,7 @@ a-simpler/
 │   ├── EditProtectedTextField.php      # TextField with edit toggle (Vue)
 │   ├── SimplerModalField.php           # Drop-in PureModal replacement
 │   ├── SimplerModalAction.php          # Drop-in PureModalAction replacement
-│   ├── GridFieldToolbarModalAction.php # GridField toolbar button with modal form
+│   ├── GridFieldToolbarModalAction.php # GridField toolbar button with modal (form or view-only)
 │   ├── GridFieldModalButton.php        # GridField column button with modal (per-row)
 │   ├── GridFieldToggleFieldButton.php  # GridField row button to toggle field values
 │   └── GridFieldToggleIsActiveButton.php # Pre-configured toggle for IsActive field
@@ -256,7 +256,11 @@ SimplerModalField::create('preview', 'Preview')
     ->setIframeHeight('80vh')
     ->setModalSize('xl')  // 'sm', 'lg', 'xl' or '800px', '90vw'
     ->setCloseBtn(false)  // Hide footer close button (default: true)
-    ->setButtonIcon('eye');
+    ->setButtonIcon('eye');  // 'ss' prefix (default) = font-icon-, 'bs' = bs-icon-
+
+// With Bootstrap Icons:
+SimplerModalField::create('viewpdf', 'View PDF')
+    ->setButtonIcon('file-pdf', 'bs');  // → bs-icon-file-pdf
 
 // HTML content
 SimplerModalField::create('info', 'Info')
@@ -290,16 +294,18 @@ Generic click handler in simpler-modal.js opens modal from data attribute.
 
 ### 3c. GridField Modal Components
 
-Two GridField-specific modal components for different use cases:
+GridField-specific modal components for different use cases:
 
 #### GridFieldToolbarModalAction (toolbar buttons)
 
-For toolbar buttons that open a modal with form fields, submitting through GridField action routing:
+Toolbar buttons that open a modal. Supports two modes:
+1. **Form mode**: Modal with form fields + submit button (set `setFieldList()`)
+2. **View-only mode**: Modal with static content, no buttons (set `setIframeSrc()` or `setBodyHtml()`)
 
 ```php
 use Restruct\Silverstripe\Simpler\GridFieldToolbarModalAction;
 
-// Extend and override handleAction():
+// Form mode - extend and override handleAction():
 class MyGridFieldAction extends GridFieldToolbarModalAction
 {
     public function __construct()
@@ -316,17 +322,28 @@ class MyGridFieldAction extends GridFieldToolbarModalAction
 
     public function handleAction(GridField $gridField, $actionName, $arguments, $data)
     {
-        if ($actionName !== 'myaction') {
-            return;
-        }
+        if ($actionName !== 'myaction') return;
         $option = $data['Option'] ?? null;
         $count = (int) ($data['Count'] ?? 1);
         // Do something with the form data...
     }
 }
 
-// Add to GridField config:
-$config->addComponent(new MyGridFieldAction());
+// View-only mode - iframe content (e.g., PDF viewer):
+$config->addComponent(
+    GridFieldToolbarModalAction::create('viewpdf', 'View PDF')
+        ->setIframeSrc('/path/to/document.pdf')
+        ->setIframeHeight('85vh')
+        ->setModalSize('60vw')
+        ->setButtonIcon('file-pdf', 'bs')  // 'ss' (default) = font-icon-, 'bs' = bs-icon-
+        ->setButtonClasses('btn btn-outline-info')
+);
+
+// View-only mode - HTML content:
+$config->addComponent(
+    GridFieldToolbarModalAction::create('preview', 'Preview')
+        ->setBodyHtml('<div class="preview">...</div>')
+);
 ```
 
 Key difference from SimplerModalAction:
@@ -388,6 +405,7 @@ $config->addComponent(
             'draft' => ['icon' => 'edit', 'title' => 'Submit for Review'],
             'review' => ['icon' => 'eye', 'title' => 'Publish'],
             'published' => ['icon' => 'check-mark', 'title' => 'Archive'],
+            // Optional: 'iconPrefix' => 'bs' for Bootstrap Icons, 'ss' (default) for font-icon-
         ])
         ->setConfirmMessage('Change status?')
 );
@@ -396,6 +414,7 @@ $config->addComponent(
 GridFieldToggleFieldButton::create('IsActive')
     ->setStateRenderer(fn($record, $value) => [
         'icon' => $record->getStatusIcon(),
+        'iconPrefix' => 'bs',  // 'ss' (default), 'bs', or false
         'title' => $record->getNextStatusLabel(),
     ])
     ->setShouldShow(fn($record) => $record->canEdit())

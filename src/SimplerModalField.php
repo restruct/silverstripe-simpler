@@ -128,6 +128,17 @@ class SimplerModalField extends PureModal
     }
 
     /**
+     * Set button CSS classes (replaces default 'btn' class).
+     * Convenience method that wraps addExtraClass().
+     */
+    public function setButtonClass(string $classes): self
+    {
+        // Remove default 'btn' since user is providing full class list
+        $this->addExtraClass($classes);
+        return $this;
+    }
+
+    /**
      * Build JSON config for data attribute
      */
     public function getModalConfig(): array

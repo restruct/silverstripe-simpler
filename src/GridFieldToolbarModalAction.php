@@ -3,21 +3,25 @@
 namespace Restruct\Silverstripe\Simpler;
 
 use SilverStripe\Core\Injector\Injectable;
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\GridField\GridField;
 use SilverStripe\Forms\GridField\GridField_ActionProvider;
 use SilverStripe\Forms\GridField\GridField_FormAction;
 use SilverStripe\Forms\GridField\GridField_HTMLProvider;
+use SilverStripe\Forms\GridField\FormAction\StateStore;
 use SilverStripe\ORM\FieldType\DBHTMLText;
 
 /**
- * GridField toolbar button that opens a modal with configurable form fields.
+ * GridField toolbar button that opens a modal with configurable content.
  *
- * This component:
- * - Renders a button in the GridField toolbar (buttons-before-left by default)
- * - Opens a modal dialog via simpler.modal when clicked
- * - The modal contains form fields that submit through GridField's action routing
- * - Uses GridField_FormAction for proper action state management
+ * Supports two modes:
+ * 1. **Form mode**: Modal with form fields that submit through GridField action routing
+ * 2. **View-only mode**: Modal with static HTML or iframe content (no form buttons)
+ *
+ * The mode is automatically determined:
+ * - If `setIframeSrc()` or `setBodyHtml()` is called → view-only mode
+ * - If `setFieldList()` is called → form mode
  *
  * Key difference from SimplerModalAction:
  * - SimplerModalAction is for DataObject edit forms (FieldList in form actions)
@@ -25,7 +29,7 @@ use SilverStripe\ORM\FieldType\DBHTMLText;
  *
  * Usage:
  * ```php
- * // Basic - extend and override handleAction():
+ * // Form mode - extend and override handleAction():
  * class MyGridFieldAction extends GridFieldToolbarModalAction
  * {
  *     public function __construct()
@@ -39,16 +43,23 @@ use SilverStripe\ORM\FieldType\DBHTMLText;
  *
  *     public function handleAction(GridField $gridField, $actionName, $arguments, $data)
  *     {
- *         if ($actionName !== 'myaction') {
- *             return;
- *         }
+ *         if ($actionName !== 'myaction') return;
  *         $option = $data['Option'] ?? null;
- *         // Do something with the form data...
+ *         // Do something...
  *     }
  * }
  *
- * // Then add to GridField config:
- * $config->addComponent(new MyGridFieldAction());
+ * // View-only mode - iframe content (e.g., PDF viewer):
+ * GridFieldToolbarModalAction::create('view', 'View PDF')
+ *     ->setIframeSrc('/path/to/document.pdf')
+ *     ->setIframeHeight('85vh')
+ *     ->setModalSize('60vw')
+ *     ->setButtonIcon('file-pdf', 'bs')  // 'ss' (default) = font-icon-, 'bs' = bs-icon-
+ *     ->setButtonClasses('btn btn-outline-info');
+ *
+ * // View-only mode - HTML content:
+ * GridFieldToolbarModalAction::create('preview', 'Preview')
+ *     ->setBodyHtml('<div class="preview">...</div>');
  * ```
  */
 class GridFieldToolbarModalAction implements GridField_HTMLProvider, GridField_ActionProvider
@@ -63,8 +74,15 @@ class GridFieldToolbarModalAction implements GridField_HTMLProvider, GridField_A
     protected string $submitLabel = 'Submit';
     protected string $buttonClasses = 'btn btn-outline-primary';
     protected ?string $buttonIcon = null;
+    /** @var string|false Icon prefix: 'ss' for font-icon-, 'bs' for bs-icon-, false for no prefix */
+    protected string|false $buttonIconPrefix = 'ss';
     protected ?string $modalSize = null;
     protected array $actionArguments = [];
+
+    // View-only mode properties
+    protected ?string $iframeSrc = null;
+    protected string $iframeHeight = '70vh';
+    protected ?string $bodyHtml = null;
 
     /**
      * @param string $actionName The GridField action name (lowercase, no spaces)
@@ -162,11 +180,15 @@ class GridFieldToolbarModalAction implements GridField_HTMLProvider, GridField_A
     }
 
     /**
-     * Set button icon (font-icon-xxx name without the prefix)
+     * Set button icon name (without prefix)
+     *
+     * @param string|null $icon Icon name (e.g., 'eye', 'file-pdf')
+     * @param string|false $prefix Icon prefix: 'ss' for font-icon- (default), 'bs' for bs-icon-, false for no prefix
      */
-    public function setButtonIcon(?string $icon): self
+    public function setButtonIcon(?string $icon, string|false $prefix = 'ss'): self
     {
         $this->buttonIcon = $icon;
+        $this->buttonIconPrefix = $prefix;
         return $this;
     }
 
@@ -230,6 +252,65 @@ class GridFieldToolbarModalAction implements GridField_HTMLProvider, GridField_A
     }
 
     /**
+     * Set iframe source URL for modal body (enables view-only mode)
+     */
+    public function setIframeSrc(string $url): self
+    {
+        $this->iframeSrc = $url;
+        return $this;
+    }
+
+    /**
+     * Get iframe source
+     */
+    public function getIframeSrc(): ?string
+    {
+        return $this->iframeSrc;
+    }
+
+    /**
+     * Set iframe height (CSS value like '70vh', '500px')
+     */
+    public function setIframeHeight(string $height): self
+    {
+        $this->iframeHeight = $height;
+        return $this;
+    }
+
+    /**
+     * Get iframe height
+     */
+    public function getIframeHeight(): string
+    {
+        return $this->iframeHeight;
+    }
+
+    /**
+     * Set HTML content for modal body (enables view-only mode)
+     */
+    public function setBodyHtml(string $html): self
+    {
+        $this->bodyHtml = $html;
+        return $this;
+    }
+
+    /**
+     * Get body HTML
+     */
+    public function getBodyHtml(): ?string
+    {
+        return $this->bodyHtml;
+    }
+
+    /**
+     * Check if this is a view-only modal (no form submission)
+     */
+    public function isViewOnly(): bool
+    {
+        return $this->iframeSrc !== null || $this->bodyHtml !== null;
+    }
+
+    /**
      * Check if this action should be shown.
      * Override in subclass for conditional display.
      */
@@ -255,7 +336,12 @@ class GridFieldToolbarModalAction implements GridField_HTMLProvider, GridField_A
         // Build button classes with icon
         $classes = $this->buttonClasses;
         if ($this->buttonIcon) {
-            $classes .= ' font-icon-' . $this->buttonIcon;
+            $iconClass = match ($this->buttonIconPrefix) {
+                'ss' => 'font-icon-' . $this->buttonIcon,
+                'bs' => 'bs-icon-' . $this->buttonIcon,
+                false => $this->buttonIcon,
+            };
+            $classes .= ' ' . $iconClass;
         }
 
         // Create the button with data-simpler-modal attribute
@@ -272,42 +358,59 @@ class GridFieldToolbarModalAction implements GridField_HTMLProvider, GridField_A
     }
 
     /**
-     * Build the modal configuration including the form HTML
+     * Build the modal configuration including the body HTML
      */
     protected function buildModalConfig(GridField $gridField): array
     {
         $config = [
             'title' => $this->dialogTitle,
-            'closeBtn' => true,
-            'closeTxt' => 'Annuleren',
-            'saveBtn' => false,  // We use our own form submit button
+            'closeBtn' => false,
+            'saveBtn' => false,
         ];
 
         if ($this->modalSize) {
             $config['size'] = $this->modalSize;
         }
 
-        // Build the form HTML with GridField action routing
-        $config['bodyHtml'] = $this->renderModalFormHtml($gridField);
+        // View-only mode: render iframe or static HTML
+        if ($this->isViewOnly()) {
+            $config['bodyHtml'] = $this->renderViewOnlyHtml();
+        } else {
+            // Form mode: render form with GridField action routing
+            $config['bodyHtml'] = $this->renderModalFormHtml($gridField);
+        }
 
         return $config;
     }
 
     /**
-     * Render the modal form HTML with GridField action button
+     * Render view-only content (iframe or static HTML)
+     */
+    protected function renderViewOnlyHtml(): string
+    {
+        if ($this->iframeSrc) {
+            return sprintf(
+                '<iframe src="%s" style="width:100%%;height:%s;border:none" frameborder="0"></iframe>',
+                htmlspecialchars($this->iframeSrc),
+                htmlspecialchars($this->iframeHeight)
+            );
+        }
+
+        return $this->bodyHtml ?? '';
+    }
+
+    /**
+     * Render the modal form HTML with AJAX submit support.
+     *
+     * Instead of a native form submit (which replaces the page with raw HTML),
+     * we render a container with data attributes that JS uses for AJAX submission.
+     * This provides:
+     * - Loading state feedback during long-running operations
+     * - Proper modal close and page reload on success
+     * - Error display in modal on failure
      */
     protected function renderModalFormHtml(GridField $gridField): string
     {
-        // Create a GridField_FormAction for proper action routing
-        $submitAction = GridField_FormAction::create(
-            $gridField,
-            $this->actionName . '_submit',
-            $this->submitLabel,
-            $this->actionName,
-            $this->actionArguments
-        );
-        $submitAction->addExtraClass('btn btn-primary font-icon-tick');
-
         // Get the form from the GridField
         $form = $gridField->getForm();
 
@@ -320,21 +423,42 @@ class GridFieldToolbarModalAction implements GridField_HTMLProvider, GridField_A
             }
         }
 
-        // Build form HTML that posts to the main form
-        // The GridField_FormAction button will handle proper routing
-        $formAction = $form ? $form->FormAction() : '';
-        $securityToken = $form ? $form->getSecurityToken()->getSecurityID() : '';
+        // Get GridField URL and security token for AJAX submission
+        $gridFieldUrl = htmlspecialchars($gridField->Link());
+        $securityId = $form ? $form->getSecurityToken()->getSecurityID() : '';
 
+        // Build the action button name manually (same logic as GridField_FormAction)
+        $state = [
+            'grid' => $gridField->getName(),
+            'actionName' => $this->actionName,
+            'args' => $this->actionArguments,
+        ];
+        $stateKey = GridField_FormAction::STATE_KEY_PREFIX . substr(md5(serialize($state)), 0, 8);
+        $actionName = 'action_gridFieldAlterAction?StateID=' . $stateKey;
+
+        // Store the state in session (same as GridField_FormAction does)
+        $store = Injector::inst()->create(StateStore::class . '.' . $gridField->getName());
+        $store->save($stateKey, $state);
+
+        $submitLabel = htmlspecialchars($this->submitLabel);
+
+        // Container with data attributes for JS AJAX handler
+        // Uses btn-toolbar for proper button alignment (matches SilverStripe Form styling)
         $html = <<<HTML
-<form method="post" action="{$formAction}" class="simpler-modal-gridfield-form">
-    <input type="hidden" name="SecurityID" value="{$securityToken}" />
+<div class="simpler-modal-gridfield-form"
+     data-gridfield-url="{$gridFieldUrl}"
+     data-security-id="{$securityId}"
+     data-action-name="{$actionName}">
     <div class="modal-form-fields">
         {$fieldsHtml}
     </div>
-    <div class="modal-form-actions mt-3 text-right">
-        {$submitAction->Field()->forTemplate()}
+    <div class="btn-toolbar mt-3 justify-content-end" role="toolbar">
+        <button type="button" class="btn btn-outline-secondary mr-2" data-dismiss="modal">Annuleren</button>
+        <button type="button" class="btn btn-primary font-icon-tick simpler-modal-ajax-submit">
+            {$submitLabel}
+        </button>
     </div>
-</form>
+</div>
 HTML;
 
         return $html;

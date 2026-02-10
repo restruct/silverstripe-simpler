@@ -34,6 +34,9 @@ class SimplerModalAction extends PureModalAction
      */
     protected ?string $modalTitle = null;
 
+    /** @var string|false Icon prefix: 'ss' for font-icon-, 'bs' for bs-icon-, false for no prefix */
+    protected string|false $buttonIconPrefix = 'ss';
+
     /**
      * Set modal size: 'sm', 'lg', 'xl' for Bootstrap sizes, or custom CSS value like '800px', '90vw'
      */
@@ -68,6 +71,19 @@ class SimplerModalAction extends PureModalAction
     public function getModalTitle(): ?string
     {
         return $this->modalTitle;
+    }
+
+    /**
+     * Set button icon with optional prefix
+     *
+     * @param string|null $icon Icon name (e.g., 'eye', 'file-pdf')
+     * @param string|false $prefix Icon prefix: 'ss' for font-icon- (default), 'bs' for bs-icon-, false for no prefix
+     */
+    public function setButtonIcon(?string $icon, string|false $prefix = 'ss'): self
+    {
+        $this->buttonIcon = $icon;
+        $this->buttonIconPrefix = $prefix;
+        return $this;
     }
 
     /**
@@ -156,7 +172,12 @@ class SimplerModalAction extends PureModalAction
     {
         $title = $this->title;
         if ($this->buttonIcon) {
-            $title = '<span class="font-icon-' . $this->buttonIcon . '"></span> ' . $title;
+            $iconClass = match ($this->buttonIconPrefix) {
+                'ss' => 'font-icon-' . $this->buttonIcon,
+                'bs' => 'bs-icon-' . $this->buttonIcon,
+                false => $this->buttonIcon,
+            };
+            $title = '<span class="' . $iconClass . '"></span> ' . $title;
         }
         return $title;
     }
