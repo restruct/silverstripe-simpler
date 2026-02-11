@@ -38,6 +38,37 @@ class SimplerModalField extends PureModal
         parent::__construct($name, $title, $content);
     }
 
+    /** @var string|false Icon prefix: 'ss' for font-icon-, 'bs' for bi bi-, false for no prefix */
+    protected string|false $buttonIconPrefix = 'ss';
+
+    /**
+     * Set button icon with optional prefix
+     *
+     * @param string|null $icon Icon name (e.g., 'eye', 'file-pdf')
+     * @param string|false $prefix Icon prefix: 'ss' for font-icon- (default), 'bs' for bi bi-, false for no prefix
+     */
+    public function setButtonIcon(string $buttonIcon = null, string|false $prefix = 'ss'): self
+    {
+        $this->buttonIcon = $buttonIcon;
+        $this->buttonIconPrefix = $prefix;
+        return $this;
+    }
+
+    /**
+     * Get the full CSS class string for the button icon
+     */
+    public function getButtonIconClass(): string
+    {
+        if (!$this->buttonIcon) {
+            return '';
+        }
+        return match ($this->buttonIconPrefix) {
+            'ss' => 'font-icon-' . $this->buttonIcon,
+            'bs' => 'bi bi-' . $this->buttonIcon,
+            false => $this->buttonIcon,
+        };
+    }
+
     /**
      * Default iframe height (CSS value)
      */

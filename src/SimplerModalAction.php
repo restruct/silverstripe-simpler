@@ -87,6 +87,21 @@ class SimplerModalAction extends PureModalAction
     }
 
     /**
+     * Get the full CSS class string for the button icon
+     */
+    public function getButtonIconClass(): string
+    {
+        if (!$this->buttonIcon) {
+            return '';
+        }
+        return match ($this->buttonIconPrefix) {
+            'ss' => 'font-icon-' . $this->buttonIcon,
+            'bs' => 'bi bi-' . $this->buttonIcon,
+            false => $this->buttonIcon,
+        };
+    }
+
+    /**
      * Build JSON config for data attribute
      */
     public function getModalConfig(): array
@@ -166,20 +181,11 @@ class SimplerModalAction extends PureModalAction
     }
 
     /**
-     * Get button title with icon for template
+     * Get button title for template (icon is handled via ButtonIconClass on the button element)
      */
     public function getButtonTitle(): string
     {
-        $title = $this->title;
-        if ($this->buttonIcon) {
-            $iconClass = match ($this->buttonIconPrefix) {
-                'ss' => 'font-icon-' . $this->buttonIcon,
-                'bs' => 'bi bi-' . $this->buttonIcon,
-                false => $this->buttonIcon,
-            };
-            $title = '<span class="' . $iconClass . '"></span> ' . $title;
-        }
-        return $title;
+        return $this->title;
     }
 
     /**
