@@ -256,11 +256,11 @@ SimplerModalField::create('preview', 'Preview')
     ->setIframeHeight('80vh')
     ->setModalSize('xl')  // 'sm', 'lg', 'xl' or '800px', '90vw'
     ->setCloseBtn(false)  // Hide footer close button (default: true)
-    ->setButtonIcon('eye');  // 'ss' prefix (default) = font-icon-, 'bs' = bs-icon-
+    ->setButtonIcon('eye');  // 'ss' prefix (default) = font-icon-, 'bs' = bi bi-
 
 // With Bootstrap Icons:
 SimplerModalField::create('viewpdf', 'View PDF')
-    ->setButtonIcon('file-pdf', 'bs');  // → bs-icon-file-pdf
+    ->setButtonIcon('file-pdf', 'bs');  // → bi bi-file-pdf
 
 // HTML content
 SimplerModalField::create('info', 'Info')
@@ -335,7 +335,7 @@ $config->addComponent(
         ->setIframeSrc('/path/to/document.pdf')
         ->setIframeHeight('85vh')
         ->setModalSize('60vw')
-        ->setButtonIcon('file-pdf', 'bs')  // 'ss' (default) = font-icon-, 'bs' = bs-icon-
+        ->setButtonIcon('file-pdf', 'bs')  // 'ss' (default) = font-icon-, 'bs' = bi bi-
         ->setButtonClasses('btn btn-outline-info')
 );
 

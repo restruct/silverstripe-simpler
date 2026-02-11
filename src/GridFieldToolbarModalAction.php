@@ -54,7 +54,7 @@ use SilverStripe\ORM\FieldType\DBHTMLText;
  *     ->setIframeSrc('/path/to/document.pdf')
  *     ->setIframeHeight('85vh')
  *     ->setModalSize('60vw')
- *     ->setButtonIcon('file-pdf', 'bs')  // 'ss' (default) = font-icon-, 'bs' = bs-icon-
+ *     ->setButtonIcon('file-pdf', 'bs')  // 'ss' (default) = font-icon-, 'bs' = bi bi-
  *     ->setButtonClasses('btn btn-outline-info');
  *
  * // View-only mode - HTML content:
@@ -74,7 +74,7 @@ class GridFieldToolbarModalAction implements GridField_HTMLProvider, GridField_A
     protected string $submitLabel = 'Submit';
     protected string $buttonClasses = 'btn btn-outline-primary';
     protected ?string $buttonIcon = null;
-    /** @var string|false Icon prefix: 'ss' for font-icon-, 'bs' for bs-icon-, false for no prefix */
+    /** @var string|false Icon prefix: 'ss' for font-icon-, 'bs' for bi bi-, false for no prefix */
     protected string|false $buttonIconPrefix = 'ss';
     protected ?string $modalSize = null;
     protected array $actionArguments = [];
@@ -183,7 +183,7 @@ class GridFieldToolbarModalAction implements GridField_HTMLProvider, GridField_A
      * Set button icon name (without prefix)
      *
      * @param string|null $icon Icon name (e.g., 'eye', 'file-pdf')
-     * @param string|false $prefix Icon prefix: 'ss' for font-icon- (default), 'bs' for bs-icon-, false for no prefix
+     * @param string|false $prefix Icon prefix: 'ss' for font-icon- (default), 'bs' for bi bi-, false for no prefix
      */
     public function setButtonIcon(?string $icon, string|false $prefix = 'ss'): self
     {
@@ -338,7 +338,7 @@ class GridFieldToolbarModalAction implements GridField_HTMLProvider, GridField_A
         if ($this->buttonIcon) {
             $iconClass = match ($this->buttonIconPrefix) {
                 'ss' => 'font-icon-' . $this->buttonIcon,
-                'bs' => 'bs-icon-' . $this->buttonIcon,
+                'bs' => 'bi bi-' . $this->buttonIcon,
                 false => $this->buttonIcon,
             };
             $classes .= ' ' . $iconClass;

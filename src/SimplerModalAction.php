@@ -34,7 +34,7 @@ class SimplerModalAction extends PureModalAction
      */
     protected ?string $modalTitle = null;
 
-    /** @var string|false Icon prefix: 'ss' for font-icon-, 'bs' for bs-icon-, false for no prefix */
+    /** @var string|false Icon prefix: 'ss' for font-icon-, 'bs' for bi bi-, false for no prefix */
     protected string|false $buttonIconPrefix = 'ss';
 
     /**
@@ -77,7 +77,7 @@ class SimplerModalAction extends PureModalAction
      * Set button icon with optional prefix
      *
      * @param string|null $icon Icon name (e.g., 'eye', 'file-pdf')
-     * @param string|false $prefix Icon prefix: 'ss' for font-icon- (default), 'bs' for bs-icon-, false for no prefix
+     * @param string|false $prefix Icon prefix: 'ss' for font-icon- (default), 'bs' for bi bi-, false for no prefix
      */
     public function setButtonIcon(?string $icon, string|false $prefix = 'ss'): self
     {
@@ -174,7 +174,7 @@ class SimplerModalAction extends PureModalAction
         if ($this->buttonIcon) {
             $iconClass = match ($this->buttonIconPrefix) {
                 'ss' => 'font-icon-' . $this->buttonIcon,
-                'bs' => 'bs-icon-' . $this->buttonIcon,
+                'bs' => 'bi bi-' . $this->buttonIcon,
                 false => $this->buttonIcon,
             };
             $title = '<span class="' . $iconClass . '"></span> ' . $title;

@@ -113,7 +113,7 @@ class GridFieldToggleFieldButton implements GridField_ColumnProvider, GridField_
      * ]
      * ```
      *
-     * Optional 'iconPrefix' key: 'ss' for font-icon- (default), 'bs' for bs-icon-, false for no prefix:
+     * Optional 'iconPrefix' key: 'ss' for font-icon- (default), 'bs' for bi bi-, false for no prefix:
      * ```php
      * ['icon' => 'file-pdf', 'iconPrefix' => 'bs', 'title' => 'View PDF']
      * ```
@@ -450,7 +450,7 @@ class GridFieldToggleFieldButton implements GridField_ColumnProvider, GridField_
         // Build icon class based on prefix
         $iconClass = match ($iconPrefix) {
             'ss' => 'font-icon-' . $icon,
-            'bs' => 'bs-icon-' . $icon,
+            'bs' => 'bi bi-' . $icon,
             false => $icon,
         };
 
