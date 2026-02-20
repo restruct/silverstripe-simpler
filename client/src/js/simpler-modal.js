@@ -193,6 +193,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     duration: 30,
                     message: 'Processing',
                     onComplete: () => {
+                        // Check if the server requested a full page reload (e.g., after FUSE save)
+                        if (window.simpler._forcePageReload) {
+                            window.simpler._forcePageReload = false;
+                            window.simpler.modal.show = false;
+                            window.location.reload();
+                            return;
+                        }
                         // Extract GridField name and reload
                         const gridFieldName = gridFieldUrl.split('/field/')[1]?.split('/')[0];
                         if (gridFieldName && window.jQuery) {
@@ -221,7 +228,14 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .then((response) => {
             if (!response.ok) {
-                throw new Error(`Request failed: ${response.status} ${response.statusText}`);
+                // Read the response body to get the actual error message from the server
+                return response.text().then((text) => {
+                    throw new Error(text || `Request failed: ${response.status} ${response.statusText}`);
+                });
+            }
+            // Check if the server wants a full page reload instead of GridField reload
+            if (response.headers.get('X-Reload') === 'true') {
+                window.simpler._forcePageReload = true;
             }
             return response.text();
         })
