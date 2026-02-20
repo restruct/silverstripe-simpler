@@ -357,6 +357,30 @@ $config->addComponent(new MyGridFieldAction());
 
 **Why this exists:** Neither `lekoala/silverstripe-pure-modal` nor `lekoala/silverstripe-cms-actions` provide this functionality. PureModalAction only works in detail forms, and GridFieldTableButton only supports basic JS `prompt()`/`confirm()` dialogs.
 
+#### Error handling
+
+The AJAX handler reads the response body on HTTP errors and displays it in the modal. Throw `HTTPResponse_Exception` to show a meaningful error:
+
+```php
+use SilverStripe\Control\HTTPResponse;
+use SilverStripe\Control\HTTPResponse_Exception;
+
+// In handleAction():
+try {
+    // ... do work
+} catch (\Exception $e) {
+    throw new HTTPResponse_Exception(new HTTPResponse($e->getMessage(), 422));
+}
+```
+
+#### Full page reload (X-Reload header)
+
+By default, on success the modal reloads only the parent GridField. To force a full page reload (e.g., when other tabs also need refreshing), set the `X-Reload` header:
+
+```php
+Controller::curr()->getResponse()->addHeader('X-Reload', 'true');
+```
+
 ### GridFieldModalButton (per-row column buttons)
 
 For per-row buttons in a GridField column that open a view-only modal:

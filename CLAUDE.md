@@ -350,6 +350,33 @@ Key difference from SimplerModalAction:
 - **SimplerModalAction** is for DataObject edit forms (FieldList in form actions area)
 - **GridFieldToolbarModalAction** is for GridField toolbars (action routing via StateID)
 
+**Error handling:** The AJAX handler reads the response body on HTTP errors and displays it in the modal. To show a meaningful error message, throw an `HTTPResponse_Exception` with a plain-text body:
+
+```php
+use SilverStripe\Control\HTTPResponse;
+use SilverStripe\Control\HTTPResponse_Exception;
+
+public function handleAction(GridField $gridField, $actionName, $arguments, $data)
+{
+    try {
+        // ... do work
+    } catch (\Exception $e) {
+        throw new HTTPResponse_Exception(
+            new HTTPResponse($e->getMessage(), 422),
+        );
+    }
+}
+```
+
+**Full page reload:** By default, on success the modal reloads only the parent GridField. To force a full page reload (e.g., when other tabs also need refreshing), set the `X-Reload` response header:
+
+```php
+use SilverStripe\Control\Controller;
+
+// In handleAction(), after successful work:
+Controller::curr()->getResponse()->addHeader('X-Reload', 'true');
+```
+
 #### GridFieldModalButton (row buttons)
 
 For per-row buttons in a GridField column that open a modal:
