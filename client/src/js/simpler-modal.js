@@ -172,6 +172,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (el.checked) formData.append(el.name, el.value || '1');
             } else if (el.type === 'radio') {
                 if (el.checked) formData.append(el.name, el.value);
+            } else if (el.tagName === 'SELECT' && el.multiple) {
+                // Handle <select multiple> — append each selected option
+                Array.from(el.selectedOptions).forEach((opt) => {
+                    formData.append(el.name, opt.value);
+                });
             } else {
                 formData.append(el.name, el.value);
             }

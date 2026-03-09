@@ -419,7 +419,8 @@ class GridFieldToolbarModalAction implements GridField_HTMLProvider, GridField_A
         if ($this->fieldList && $this->fieldList->count()) {
             foreach ($this->fieldList as $field) {
                 $field->setForm($form);
-                $fieldsHtml .= $field->FieldHolder()->forTemplate();
+                # Cast to string — LiteralField::FieldHolder() returns string, others return DBHTMLText
+                $fieldsHtml .= (string) $field->FieldHolder();
             }
         }
 
