@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.0 (unreleased)
+## 1.0.0 (2026-09-25)
 
 **One release line for Silverstripe 5 and 6.** Until now the Silverstripe 5 work lived on the `ss5`
 branch (tags `0.3.x`, `silverstripe/framework ^4 || ^5`) and an untagged Silverstripe 6 port on
