@@ -169,10 +169,36 @@ jobs:
           # Flushing the test manifest: PHPUnit 11 (SS6) ignores a `flush=1` argument, so SS6
           # legs flush through this variable. It is INERT on framework 5: the SS5 legs are not
           # flushed by it and rely on the runner being fresh (no manifest cache exists yet).
+          # The SS5 legs therefore flush explicitly with a trailing `flush=1` (see below).
           SS_PHPUNIT_FLUSH: 1
         run: |
-          vendor/bin/phpunit --testsuite simpler
-          vendor/bin/phpunit --testsuite consumer
+          # An empty run must fail on every leg: a suite that silently collects 0 tests (wrong
+          # path, export-ignored tests/, a mirrored instead of symlinked install) otherwise
+          # exits 0 and the leg goes green having tested nothing.
+          if [ "${{ matrix.silverstripe }}" = "5" ]; then
+            # SS5 / PHPUnit 9: `flush=1` only works AFTER a path argument; combined with
+            # --testsuite PHPUnit reads it as a file and aborts ("Cannot open file"). So the
+            # suites run by path. PHPUnit 9 has no --fail-on-empty-test-suite and exits 0 on
+            # "No tests executed!", so the output is checked for that line.
+            run_ss5() {
+              status=0
+              out=$(vendor/bin/phpunit "$1" flush=1 2>&1) || status=$?
+              echo "$out"
+              if [ "$status" -ne 0 ]; then
+                return "$status"
+              fi
+              if echo "$out" | grep -q "No tests executed!"; then
+                echo "::error::No tests executed in $1"
+                return 1
+              fi
+            }
+            run_ss5 vendor/restruct/silverstripe-simpler/tests
+            run_ss5 app/tests
+          else
+            # SS6 / PHPUnit 11: flushed by SS_PHPUNIT_FLUSH above, which combines with --testsuite.
+            vendor/bin/phpunit --testsuite simpler --fail-on-empty-test-suite
+            vendor/bin/phpunit --testsuite consumer --fail-on-empty-test-suite
+          fi
 
       - name: Boot the app and build the database
         # The suite proves the classes behave; this proves the module does not break a real boot.
