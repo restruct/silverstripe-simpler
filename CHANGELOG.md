@@ -49,7 +49,7 @@ Upgrade guide: [UPGRADING.md](UPGRADING.md).
 
 ### Tests and CI
 
-- Behavioural PHPUnit tests (83 tests) run on Silverstripe 5 (PHPUnit 9) and 6 (PHPUnit 11): a real CMS
+- Behavioural PHPUnit tests (84 tests) run on Silverstripe 5 (PHPUnit 9) and 6 (PHPUnit 11): a real CMS
   request proves the import map, the core bundle and the opt-in modal load; the modal field/action
   config and rendered buttons; the GridField components against real records; HeadRequirements and
   the Session helpers.
