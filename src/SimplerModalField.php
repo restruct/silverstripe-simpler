@@ -47,7 +47,7 @@ class SimplerModalField extends PureModal
      * @param string|null $icon Icon name (e.g., 'eye', 'file-pdf')
      * @param string|false $prefix Icon prefix: 'ss' for font-icon- (default), 'bs' for bi bi-, false for no prefix
      */
-    public function setButtonIcon(string $buttonIcon = null, string|false $prefix = 'ss'): self
+    public function setButtonIcon(?string $buttonIcon = null, string|false $prefix = 'ss'): self
     {
         $this->buttonIcon = $buttonIcon;
         $this->buttonIconPrefix = $prefix;
