@@ -23,6 +23,8 @@
  * WHO USES THIS:
  * - simpler-silverstripe.js (imports 'jquery' for Entwine integration)
  * - Note: Bootstrap 5 modal (SS6) doesn't need jQuery, only BS4 (SS5) did
+ * - simpler-modal.js: the Bootstrap 4 modal plugin (package alias 'bootstrap4'), which is still
+ *   bundled for the SS5 admin now that one release line serves both SS5 and SS6
  *
  * This shim does NOT set window.$ - add that yourself if needed:
  *   Requirements::customScript('window.$ = window.$ || window.jQuery;', 'jquery-alias');

@@ -30,6 +30,14 @@ class SimplerModalAction extends PureModalAction
     protected ?string $modalSize = null;
 
     /**
+     * Separate modal title (independent from submit button text)
+     */
+    protected ?string $modalTitle = null;
+
+    /** @var string|false Icon prefix: 'ss' for font-icon-, 'bs' for bi bi-, false for no prefix */
+    protected string|false $buttonIconPrefix = 'ss';
+
+    /**
      * Set modal size: 'sm', 'lg', 'xl' for Bootstrap sizes, or custom CSS value like '800px', '90vw'
      */
     public function setModalSize(string $size): self
@@ -41,6 +49,56 @@ class SimplerModalAction extends PureModalAction
     public function getModalSize(): ?string
     {
         return $this->modalSize;
+    }
+
+    /**
+     * Set the modal dialog title independently from the submit button text.
+     *
+     * This allows for a descriptive title like "Generate questions with Claude"
+     * while keeping the submit button concise like "Generate".
+     *
+     * @param string $title The modal dialog title
+     */
+    public function setModalTitle(string $title): self
+    {
+        $this->modalTitle = $title;
+        return $this;
+    }
+
+    /**
+     * Get the modal title
+     */
+    public function getModalTitle(): ?string
+    {
+        return $this->modalTitle;
+    }
+
+    /**
+     * Set button icon with optional prefix
+     *
+     * @param string|null $icon Icon name (e.g., 'eye', 'file-pdf')
+     * @param string|false $prefix Icon prefix: 'ss' for font-icon- (default), 'bs' for bi bi-, false for no prefix
+     */
+    public function setButtonIcon(?string $icon, string|false $prefix = 'ss'): self
+    {
+        $this->buttonIcon = $icon;
+        $this->buttonIconPrefix = $prefix;
+        return $this;
+    }
+
+    /**
+     * Get the full CSS class string for the button icon
+     */
+    public function getButtonIconClass(): string
+    {
+        if (!$this->buttonIcon) {
+            return '';
+        }
+        return match ($this->buttonIconPrefix) {
+            'ss' => 'font-icon-' . $this->buttonIcon,
+            'bs' => 'bi bi-' . $this->buttonIcon,
+            false => $this->buttonIcon,
+        };
     }
 
     /**
@@ -81,11 +139,13 @@ class SimplerModalAction extends PureModalAction
     }
 
     /**
-     * Get the dialog title
+     * Get the dialog title.
+     *
+     * Priority: modalTitle > dialogButtonTitle > title
      */
     protected function getDialogTitle(): ?string
     {
-        return $this->dialogButtonTitle ?: $this->title;
+        return $this->modalTitle ?: $this->dialogButtonTitle ?: $this->title;
     }
 
     /**
@@ -121,15 +181,11 @@ class SimplerModalAction extends PureModalAction
     }
 
     /**
-     * Get button title with icon for template
+     * Get button title for template (icon is handled via ButtonIconClass on the button element)
      */
     public function getButtonTitle(): string
     {
-        $title = $this->title;
-        if ($this->buttonIcon) {
-            $title = '<span class="font-icon-' . $this->buttonIcon . '"></span> ' . $title;
-        }
-        return $title;
+        return $this->title;
     }
 
     /**

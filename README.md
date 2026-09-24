@@ -1,6 +1,37 @@
 # Simpler Silverstripe
 
+*Maintained by [Restruct](https://github.com/restruct). If this module saves you time, you can
+[support ongoing maintenance](https://github.com/sponsors/restruct).*
+
 Makes SilverStripe Admin development simpler by re-introducing traditional basics.
+
+## Requirements
+
+* Silverstripe 5 or 6 (`silverstripe/framework ^5 || ^6`)
+* PHP 8.1 or newer
+* Optional: `lekoala/silverstripe-pure-modal` for `SimplerModalField` / `SimplerModalAction`
+  (`^1.2` on Silverstripe 5, `^2` on Silverstripe 6)
+
+## Installation
+
+```
+composer require restruct/silverstripe-simpler
+```
+
+## Version compatibility
+
+| Branch | Module version | Silverstripe | PHP |
+|--------|----------------|--------------|-----|
+| `main` | `1.x` | `^5 \|\| ^6` | `^8.1` |
+| `ss5` | `0.3.x` | `^4 \|\| ^5` | as Silverstripe requires |
+| (tags only) | `0.1.9` | `^4 \|\| ^5` (Vue 2, legacy) | as Silverstripe requires |
+
+`main` is the maintained line: one release line serves both Silverstripe 5 and 6, so there is no
+separate Silverstripe 6 branch. Silverstripe 4 reached end of life in April 2025 and is no longer
+supported or tested here; projects still on it can stay on the `0.x` tags, which remain available.
+Upgrading from 0.3.x: see [UPGRADING.md](UPGRADING.md) and [CHANGELOG.md](CHANGELOG.md).
+
+**`composer.json` is the source of truth** for exact constraints; this table is a quick reference.
 
 ## Features
 
@@ -10,12 +41,14 @@ Makes SilverStripe Admin development simpler by re-introducing traditional basic
 | **HeadRequirements** - Import maps and early scripts in `<head>` | - | Always | PHP + templates |
 | **DOM Events** - `DOMNodesInserted`/`DOMNodesRemoved` for dynamic content | ~5kb | Always | Core bundle |
 | **Vue 3 Import Map** - Use Vue in your own ES modules | ~162kb | Opt-in | AdminExtension |
-| **Modal Dialog** - Bootstrap modal via `simpler.modal` | ~24kb | Opt-in | Requires import map |
+| **Modal Dialog** - Bootstrap modal via `simpler.modal` | ~42kb | Opt-in | Requires import map |
+| **GridField Modals** - Toolbar/row buttons with modal forms | - | Opt-in | PHP only, uses Modal Dialog |
+| **GridField Toggle** - Row buttons to cycle field values | - | Opt-in | PHP only, no dependencies |
 
 **Total sizes:**
 - DOM events only: ~5kb (always loaded)
 - Import map with Vue only: ~5kb + 162kb = **~167kb** (for your own Vue components)
-- Modal via PHP: ~5kb + 162kb + 24kb = **~191kb** (import map auto-injected)
+- Modal via PHP: ~5kb + 162kb + 42kb = **~209kb** (import map auto-injected)
 - Modal via JS config: same, but requires AdminExtension in config
 
 ## 1. DOM events (always loaded)
@@ -160,6 +193,12 @@ createApp({
 ## 3. Modal dialog (Vue 3 + Bootstrap modal, opt-in)
 
 ![Modal in action](docs/modal-screenshot.png)
+
+**Silverstripe 5 and 6.** The CMS ships Bootstrap 4 CSS on Silverstripe 5 and Bootstrap 5 CSS on
+Silverstripe 6. `simpler-modal.js` bundles both modal implementations and picks the one matching
+the page's CSS at runtime, so the same code works on either. To close the modal from HTML you put in
+`bodyHtml`, use `data-simpler-dismiss` (Bootstrap's own `data-dismiss="modal"` and
+`data-bs-dismiss="modal"` are honoured on both majors too).
 
 > **Note:** The Vue import map is automatically injected when using SimplerModalField/Action PHP classes.  
 > Manual setup only needed if using `simpler.modal` directly from JavaScript.
@@ -308,7 +347,173 @@ use Restruct\Silverstripe\Simpler\SimplerModalAction as PureModalAction;
 
 All existing code continues to work - same API, better rendering.
 
-## 5. Static session helpers
+## 5. GridField modal components
+
+Two components for modals in GridField context (not available in PureModal or cms-actions):
+
+### GridFieldToolbarModalAction (toolbar buttons)
+
+For toolbar buttons that open a modal with form fields, submitting through GridField action routing:
+
+```php
+use Restruct\Silverstripe\Simpler\GridFieldToolbarModalAction;
+
+// Extend and override handleAction():
+class MyGridFieldAction extends GridFieldToolbarModalAction
+{
+    public function __construct()
+    {
+        parent::__construct('myaction', 'Do Something');
+        $this->setDialogTitle('Configure Action');
+        $this->setSubmitLabel('Apply');
+        $this->setButtonIcon('rocket');
+        $this->setFieldList(FieldList::create([
+            DropdownField::create('Option', 'Choose', $options),
+            NumericField::create('Count', 'How many'),
+        ]));
+    }
+
+    public function handleAction(GridField $gridField, $actionName, $arguments, $data)
+    {
+        if ($actionName !== 'myaction') {
+            return;
+        }
+        $option = $data['Option'] ?? null;
+        $count = (int) ($data['Count'] ?? 1);
+        // Do something with the form data...
+    }
+}
+
+// Add to GridField config:
+$config->addComponent(new MyGridFieldAction());
+```
+
+**Key difference from SimplerModalAction:**
+- `SimplerModalAction` is for DataObject edit forms (`getCMSActions()`)
+- `GridFieldToolbarModalAction` is for GridField toolbars (action routing via StateID)
+
+**Why this exists:** Neither `lekoala/silverstripe-pure-modal` nor `lekoala/silverstripe-cms-actions` provide this functionality. PureModalAction only works in detail forms, and GridFieldTableButton only supports basic JS `prompt()`/`confirm()` dialogs.
+
+#### Error handling
+
+The AJAX handler reads the response body on HTTP errors and displays it in the modal. Throw `HTTPResponse_Exception` to show a meaningful error:
+
+```php
+use SilverStripe\Control\HTTPResponse;
+use SilverStripe\Control\HTTPResponse_Exception;
+
+// In handleAction():
+try {
+    // ... do work
+} catch (\Exception $e) {
+    throw new HTTPResponse_Exception(new HTTPResponse($e->getMessage(), 422));
+}
+```
+
+#### Full page reload (X-Reload header)
+
+By default, on success the modal reloads only the parent GridField. To force a full page reload (e.g., when other tabs also need refreshing), set the `X-Reload` header:
+
+```php
+Controller::curr()->getResponse()->addHeader('X-Reload', 'true');
+```
+
+### GridFieldModalButton (per-row column buttons)
+
+For per-row buttons in a GridField column that open a view-only modal:
+
+```php
+use Restruct\Silverstripe\Simpler\GridFieldModalButton;
+
+class MyDetailButton extends GridFieldModalButton
+{
+    protected function getButtonLabel(DataObject $record): string
+    {
+        return 'Details';
+    }
+
+    protected function getModalTitle(DataObject $record): string
+    {
+        return 'Details for ' . $record->Title;
+    }
+
+    protected function getModalContent(DataObject $record): string
+    {
+        return '<p>' . htmlspecialchars($record->Description) . '</p>';
+    }
+
+    protected function shouldShowButton(DataObject $record): bool
+    {
+        return $record->canView();
+    }
+}
+
+// Add to GridField config:
+$config->addComponent(new MyDetailButton());
+```
+
+Options (all fluent): `setColumnName()` (default `ModalAction`), `setButtonClasses()` (default
+`btn btn-sm btn-outline-info`), `setModalSize()` (`sm`/`lg`/`xl` or a CSS width), `setShowCloseButton()`
+(default `true`) and `setCloseButtonText()` (default `Sluiten`).
+
+The button is rendered inside `<span class="action">`: the `.action` ancestor keeps a click from
+opening the row's record, while the button itself must not carry `action`, because silverstripe/admin
+turns every `.grid-field .action` button into an AJAX GridField reload (#5, changed in 1.0.0).
+
+### GridFieldToggleFieldButton (row toggle buttons)
+
+For per-row buttons that cycle a field through values (boolean or multi-state):
+
+```php
+use Restruct\Silverstripe\Simpler\GridFieldToggleFieldButton;
+use Restruct\Silverstripe\Simpler\GridFieldToggleIsActiveButton;
+
+// Simple boolean toggle for IsActive field (pre-configured)
+$config->addComponent(GridFieldToggleIsActiveButton::create());
+
+// Generic boolean toggle for any field
+$config->addComponent(GridFieldToggleFieldButton::create('IsPublished'));
+
+// Multi-state toggle (cycles through values in order)
+$config->addComponent(
+    GridFieldToggleFieldButton::create('Status')
+        ->setStates([
+            'draft' => ['icon' => 'edit', 'title' => 'Submit for Review'],
+            'review' => ['icon' => 'eye', 'title' => 'Publish'],
+            'published' => ['icon' => 'check-mark', 'title' => 'Archive'],
+            'archived' => ['icon' => 'archive', 'title' => 'Reset to Draft'],
+        ])
+        ->setConfirmMessage('Change status?')
+);
+```
+
+**Advanced options:**
+
+```php
+GridFieldToggleFieldButton::create('IsActive')
+    // Custom state rendering via callback
+    ->setStateRenderer(function(DataObject $record, $currentValue) {
+        return [
+            'icon' => $record->getStatusIcon(),
+            'title' => $record->getNextStatusLabel(),
+            'buttonClass' => $currentValue ? 'text-success' : 'text-muted',
+        ];
+    })
+    // Visibility check
+    ->setShouldShow(fn($record) => $record->canEdit())
+    // Custom toggle logic (called before save)
+    ->setToggleAction(function(DataObject $record, $newValue) {
+        $record->IsActive = $newValue;
+        $record->StatusChangedDate = DBDatetime::now();
+        $record->StatusChangedBy = Security::getCurrentUser()->ID;
+    })
+    // Confirmation dialog
+    ->setConfirmMessage('Are you sure?')
+    // Use writeWithoutVersion() for versioned records (default: true)
+    ->setWriteWithoutVersion(true);
+```
+
+## 6. Static Session helpers
 
 ```php
 use Restruct\Silverstripe\Simpler\Session;
@@ -317,10 +522,12 @@ use Restruct\Silverstripe\Simpler\Session;
 $value = Session::get('key');
 Session::set('key', 'value');
 Session::clear('key');
-Session::clearAll();
+Session::clear_all();
+Session::add_to_array('key', 'value');
+$all = Session::get_all();
 ```
 
-## 6. HeadRequirements (import maps, early scripts)
+## 7. HeadRequirements (import maps, early scripts)
 
 For scripts that must be in `<head>` (import maps, early config):
 
@@ -341,7 +548,14 @@ HeadRequirements::custom_script('window.CONFIG = { debug: true }', 'my-config');
 
 Also available as template globals: `$HeadReq_importMap()`, `$HeadReq_js()`, `$HeadReq_customScript()`.
 
-## 7. Configuration summary
+## 8. Configuration summary
+
+| Config | Set on | Default | Effect |
+|--------|--------|---------|--------|
+| `extensions: [AdminExtension]` | `SilverStripe\Admin\LeftAndMain` | not applied | Vue 3 import map in the CMS `<head>` (dev or prod build by environment) |
+| `simpler_include_modal` | `SilverStripe\Admin\LeftAndMain` | `false` | With AdminExtension applied: also load `simpler-modal.js` on every CMS page |
+| `skip_import_map_check` | `Restruct\Silverstripe\Simpler\AdminExtension` | `false` | Silence the warning Vue-based fields raise when the import map was not set up on page load |
+| `extra_requirements_javascript` / `_css` | `SilverStripe\Admin\LeftAndMain` | set by this module | Core bundle and stylesheet, always loaded in the CMS |
 
 ```yaml
 # Default (auto-applied by module):
@@ -373,7 +587,7 @@ SilverStripe\Admin\LeftAndMain:
     - 'restruct/silverstripe-simpler:client/dist/js/simpler-modal.js': { type: module }
 ```
 
-## 8. Development
+## 9. Development
 
 ### Local git checkout
 
@@ -396,7 +610,18 @@ cd silverstripe-simpler
 yarn install
 yarn run dev        # Watch mode
 yarn run production # Production build
+yarn test           # Modal smoke test (jsdom) against the Bootstrap 4 and 5 paths
 ```
+
+`client/dist` is committed; CI rebuilds it and fails if it differs from what `client/src` produces.
+
+### Tests
+
+The PHP tests need a Silverstripe host project (they cannot run from the module directory alone).
+Require the module there through a Composer **path repository with `"symlink": true`** - `/tests` is
+`export-ignore`, so a dist install has no tests - plus `silverstripe/recipe-testing` and, for the modal
+field tests, `lekoala/silverstripe-pure-modal`. `.github/workflows/ci.yml` builds exactly such a host
+for each supported Silverstripe major and is the reference setup.
 
 ## Known Issues
 
@@ -410,6 +635,4 @@ See [docs/ENTWINE_VUE_CONFLICT.md](docs/ENTWINE_VUE_CONFLICT.md) for details, al
 
 ## Version notes
 
-- **Branch ss5**: SilverStripe 5 (Vue 3)
-- **Tag 0.1.9**: SilverStripe 5 (Vue 2, legacy)
-- **main**: SilverStripe 6
+See [Version compatibility](#version-compatibility) above.

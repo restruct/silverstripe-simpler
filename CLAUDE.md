@@ -2,14 +2,14 @@
 
 **Package:** `restruct/silverstripe-simpler`
 **Namespace:** `Restruct\Silverstripe\Simpler`
-**Branch:** `ss5` (SilverStripe 5 compatible)
+**Branch:** `main` (Silverstripe 5 and 6, `1.x`). Older lines: see Version Notes.
 
 ## Purpose
 
 Makes SilverStripe Admin development simpler by re-introducing traditional basics:
 
 1. **Synthetic DOM Events** (always loaded) - `DOMNodesInserted`/`DOMNodesRemoved` for JS initialization on dynamic content
-2. **Modal Dialog** (opt-in) - Bootstrap 4 modal via global `simpler.modal` object
+2. **Modal Dialog** (opt-in) - Bootstrap modal via global `simpler.modal` object; bundles Bootstrap 4 (SS5 admin CSS) and Bootstrap 5 (SS6 admin CSS) and picks one at runtime
 3. **Vue 3 Import Map** (opt-in) - Use Vue 3 in your own ES modules
 4. **Static Session Helpers** - `Session::get()`/`set()` instead of `$this->getRequest()->getSession()->get()`
 5. **HeadRequirements** - Import maps and early scripts in `<head>` (also template globals)
@@ -20,12 +20,16 @@ Makes SilverStripe Admin development simpler by re-introducing traditional basic
 a-simpler/
 ├── _config/config.yml              # Auto-loads core, opt-in for modal/import map
 ├── src/
-│   ├── Session.php                 # Static session accessor class
-│   ├── HeadRequirements.php        # Static helpers for head JS (import maps, early scripts)
-│   ├── AdminExtension.php          # Injects Vue 3 import map (opt-in)
-│   ├── EditProtectedTextField.php  # TextField with edit toggle (Vue)
-│   ├── SimplerModalField.php       # Drop-in PureModal replacement
-│   └── SimplerModalAction.php      # Drop-in PureModalAction replacement
+│   ├── Session.php                     # Static session accessor class
+│   ├── HeadRequirements.php            # Static helpers for head JS (import maps, early scripts)
+│   ├── AdminExtension.php              # Injects Vue 3 import map (opt-in)
+│   ├── EditProtectedTextField.php      # TextField with edit toggle (Vue)
+│   ├── SimplerModalField.php           # Drop-in PureModal replacement
+│   ├── SimplerModalAction.php          # Drop-in PureModalAction replacement
+│   ├── GridFieldToolbarModalAction.php # GridField toolbar button with modal (form or view-only)
+│   ├── GridFieldModalButton.php        # GridField column button with modal (per-row)
+│   ├── GridFieldToggleFieldButton.php  # GridField row button to toggle field values
+│   └── GridFieldToggleIsActiveButton.php # Pre-configured toggle for IsActive field
 ├── templates/Restruct/Silverstripe/Simpler/
 │   ├── EditProtectedTextField.ss   # Vue-powered edit toggle field
 │   ├── SimplerModalField.ss        # Button with data-simpler-modal attribute
@@ -33,12 +37,12 @@ a-simpler/
 ├── client/
 │   ├── src/js/
 │   │   ├── simpler-silverstripe.js # Core: DOM events, jQuery $, window.simpler
-│   │   └── simpler-modal.js        # Opt-in: BS4 modal + Vue 3 modal app
+│   │   └── simpler-modal.js        # Opt-in: BS4 + BS5 modal (picked at runtime) + Vue 3 modal app
 │   ├── src/styles/
 │   │   └── simpler-silverstripe.scss
 │   └── dist/js/
 │       ├── simpler-silverstripe.js     # Core bundle (~5kb)
-│       ├── simpler-modal.js            # Modal bundle (~192kb, includes Vue 3)
+│       ├── simpler-modal.js            # Modal bundle (~42kb, BS4 + BS5 modal; Vue 3 via import map)
 │       ├── vue.esm-browser.js          # Vue 3 dev (~530kb, for import map)
 │       └── vue.esm-browser.prod.js     # Vue 3 prod (~162kb, for import map)
 ├── webpack.mix.js
@@ -52,9 +56,11 @@ a-simpler/
 | `simpler-silverstripe.js` | ~5kb | DOM events, React mounts, jQuery `$`, `window.simpler` | Always |
 | `vue.esm-browser.prod.js` | ~162kb | Vue 3 for import map (prod) | Via AdminExtension |
 | `vue.esm-browser.js` | ~530kb | Vue 3 for import map (dev) | Via AdminExtension |
-| `simpler-modal.js` | ~17kb | BS4 modal plugin + Vue modal app | Opt-in (requires AdminExtension) |
+| `simpler-modal.js` | ~42kb | BS4 jQuery modal plugin + BS5 modal (one picked at runtime) + Vue modal app | Opt-in (requires AdminExtension) |
 
 **Note:** `simpler-modal.js` uses Vue via import map - AdminExtension must be enabled for modal to work.
+It also requires jQuery as a global (the Bootstrap 4 plugin is imported at the top level and throws without it); both admins ship jQuery.
+`client/dist` is committed and CI rebuilds it and fails on a diff: rebuild with `yarn install --frozen-lockfile && yarn production` (yarn only; there is no package-lock.json).
 
 ## Configuration
 
@@ -252,7 +258,11 @@ SimplerModalField::create('preview', 'Preview')
     ->setIframeHeight('80vh')
     ->setModalSize('xl')  // 'sm', 'lg', 'xl' or '800px', '90vw'
     ->setCloseBtn(false)  // Hide footer close button (default: true)
-    ->setButtonIcon('eye');
+    ->setButtonIcon('eye');  // 'ss' prefix (default) = font-icon-, 'bs' = bi bi-
+
+// With Bootstrap Icons:
+SimplerModalField::create('viewpdf', 'View PDF')
+    ->setButtonIcon('file-pdf', 'bs');  // → bi bi-file-pdf
 
 // HTML content
 SimplerModalField::create('info', 'Info')
@@ -265,6 +275,8 @@ SimplerModalAction::create('translate', 'Translate')
     ]))
     ->setDialogButtonTitle('Translate');
 ```
+
+Button titles are escaped (`$ButtonTitle.XML` / `$Title.XML`): plain text only, use `setButtonIcon()` for icons.
 
 Data attribute pattern - button renders with JSON config:
 ```html
@@ -283,6 +295,165 @@ Generic click handler in simpler-modal.js opens modal from data attribute.
 - `saveBtn` (bool) - Show save/primary button
 - `saveTxt` (string) - Save button text
 - `static` (bool) - Prevent closing via backdrop click or Escape
+
+### 3c. GridField Modal Components
+
+GridField-specific modal components for different use cases:
+
+#### GridFieldToolbarModalAction (toolbar buttons)
+
+Toolbar buttons that open a modal. Supports two modes:
+1. **Form mode**: Modal with form fields + submit button (set `setFieldList()`)
+2. **View-only mode**: Modal with static content, no buttons (set `setIframeSrc()` or `setBodyHtml()`)
+
+```php
+use Restruct\Silverstripe\Simpler\GridFieldToolbarModalAction;
+
+// Form mode - extend and override handleAction():
+class MyGridFieldAction extends GridFieldToolbarModalAction
+{
+    public function __construct()
+    {
+        parent::__construct('myaction', 'Do Something');
+        $this->setDialogTitle('Configure Action');
+        $this->setSubmitLabel('Apply');
+        $this->setButtonIcon('rocket');
+        $this->setFieldList(FieldList::create([
+            DropdownField::create('Option', 'Choose', $options),
+            NumericField::create('Count', 'How many'),
+        ]));
+    }
+
+    public function handleAction(GridField $gridField, $actionName, $arguments, $data)
+    {
+        if ($actionName !== 'myaction') return;
+        $option = $data['Option'] ?? null;
+        $count = (int) ($data['Count'] ?? 1);
+        // Do something with the form data...
+    }
+}
+
+// View-only mode - iframe content (e.g., PDF viewer):
+$config->addComponent(
+    GridFieldToolbarModalAction::create('viewpdf', 'View PDF')
+        ->setIframeSrc('/path/to/document.pdf')
+        ->setIframeHeight('85vh')
+        ->setModalSize('60vw')
+        ->setButtonIcon('file-pdf', 'bs')  // 'ss' (default) = font-icon-, 'bs' = bi bi-
+        ->setButtonClasses('btn btn-outline-info')
+);
+
+// View-only mode - HTML content:
+$config->addComponent(
+    GridFieldToolbarModalAction::create('preview', 'Preview')
+        ->setBodyHtml('<div class="preview">...</div>')
+);
+```
+
+Key difference from SimplerModalAction:
+- **SimplerModalAction** is for DataObject edit forms (FieldList in form actions area)
+- **GridFieldToolbarModalAction** is for GridField toolbars (action routing via StateID)
+
+**Error handling:** The AJAX handler reads the response body on HTTP errors and displays it in the modal. To show a meaningful error message, throw an `HTTPResponse_Exception` with a plain-text body:
+
+```php
+use SilverStripe\Control\HTTPResponse;
+use SilverStripe\Control\HTTPResponse_Exception;
+
+public function handleAction(GridField $gridField, $actionName, $arguments, $data)
+{
+    try {
+        // ... do work
+    } catch (\Exception $e) {
+        throw new HTTPResponse_Exception(
+            new HTTPResponse($e->getMessage(), 422),
+        );
+    }
+}
+```
+
+**Full page reload:** By default, on success the modal reloads only the parent GridField. To force a full page reload (e.g., when other tabs also need refreshing), set the `X-Reload` response header:
+
+```php
+use SilverStripe\Control\Controller;
+
+// In handleAction(), after successful work:
+Controller::curr()->getResponse()->addHeader('X-Reload', 'true');
+```
+
+#### GridFieldModalButton (row buttons)
+
+For per-row buttons in a GridField column that open a modal:
+
+```php
+use Restruct\Silverstripe\Simpler\GridFieldModalButton;
+
+class MyDetailButton extends GridFieldModalButton
+{
+    protected function getButtonLabel(DataObject $record): string
+    {
+        return 'Details';
+    }
+
+    protected function getModalTitle(DataObject $record): string
+    {
+        return 'Details for ' . $record->Title;
+    }
+
+    protected function getModalContent(DataObject $record): string
+    {
+        return '<p>' . htmlspecialchars($record->Description) . '</p>';
+    }
+
+    protected function shouldShowButton(DataObject $record): bool
+    {
+        return $record->canView();
+    }
+}
+
+// Add to GridField config:
+$config->addComponent(new MyDetailButton());
+```
+
+#### GridFieldToggleFieldButton (row toggle buttons)
+
+For per-row buttons that cycle a field through values:
+
+```php
+use Restruct\Silverstripe\Simpler\GridFieldToggleFieldButton;
+use Restruct\Silverstripe\Simpler\GridFieldToggleIsActiveButton;
+
+// Pre-configured for IsActive boolean field
+$config->addComponent(GridFieldToggleIsActiveButton::create());
+
+// Generic boolean toggle
+$config->addComponent(GridFieldToggleFieldButton::create('IsPublished'));
+
+// Multi-state cycling
+$config->addComponent(
+    GridFieldToggleFieldButton::create('Status')
+        ->setStates([
+            'draft' => ['icon' => 'edit', 'title' => 'Submit for Review'],
+            'review' => ['icon' => 'eye', 'title' => 'Publish'],
+            'published' => ['icon' => 'check-mark', 'title' => 'Archive'],
+            // Optional: 'iconPrefix' => 'bs' for Bootstrap Icons, 'ss' (default) for font-icon-
+        ])
+        ->setConfirmMessage('Change status?')
+);
+
+// With callbacks
+GridFieldToggleFieldButton::create('IsActive')
+    ->setStateRenderer(fn($record, $value) => [
+        'icon' => $record->getStatusIcon(),
+        'iconPrefix' => 'bs',  // 'ss' (default), 'bs', or false
+        'title' => $record->getNextStatusLabel(),
+    ])
+    ->setShouldShow(fn($record) => $record->canEdit())
+    ->setToggleAction(function($record, $newValue) {
+        $record->IsActive = $newValue;
+        $record->ModifiedDate = DBDatetime::now();
+    });
+```
 
 ### 4. EditProtectedTextField
 
@@ -313,7 +484,7 @@ use Restruct\Silverstripe\Simpler\Session;
 $value = Session::get('key');
 Session::set('key', 'value');
 Session::clear('key');
-Session::clearAll();
+Session::clear_all();
 ```
 
 ### 6. HeadRequirements (import maps, early scripts)
@@ -342,8 +513,8 @@ Also available as template globals: `$HeadReq_importMap()`, `$HeadReq_js()`, `$H
 - **MutationObserver** watches document for DOM changes, batched at 100ms
 - **React Form wrapper** via `Injector.transform()` emits mount/unmount events
 - **jQuery** is framework-provided (external), aliased to `$`
-- **Bootstrap 4 modal** jQuery plugin bundled in simpler-modal.js
-- **Vue 3** bundled with template compiler in simpler-modal.js
+- **Bootstrap modal**: simpler-modal.js bundles the Bootstrap 4 jQuery plugin (npm alias `bootstrap4`) AND the Bootstrap 5 modal, and picks one at runtime from the page's CSS (`--bs-blue` on :root = Bootstrap 5, i.e. SS6 admin; otherwise Bootstrap 4, i.e. SS5 admin)
+- **Vue 3** is NOT bundled in simpler-modal.js: it is a webpack external resolved through the import map (template compiler build)
 - **Import map** auto-switches between dev/prod Vue based on `Director::isDev()`
 
 ## Known Issues
@@ -358,6 +529,4 @@ See [docs/ENTWINE_VUE_CONFLICT.md](docs/ENTWINE_VUE_CONFLICT.md) for full detail
 
 ## Version Notes
 
-- **Branch ss5**: SilverStripe 5 compatible (Vue 3)
-- **Tag 0.1.9**: SilverStripe 5 compatible (Vue 2, legacy)
-- **main branch**: SilverStripe 6
+Branches, module versions and supported Silverstripe/PHP versions: see the "Version compatibility" table in [README.md](README.md). Upgrade notes: [UPGRADING.md](UPGRADING.md).

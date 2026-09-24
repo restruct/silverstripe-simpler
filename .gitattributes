@@ -1,0 +1,9 @@
+# Keep tests and CI out of dist installs: consumers should not ship this module's test fixtures.
+# Local and CI test runs therefore install the module as a symlinked path repository (or a checkout).
+/tests export-ignore
+/.github export-ignore
+/phpunit.xml.dist export-ignore
+
+# Git files
+/.gitattributes export-ignore
+/.gitignore export-ignore

@@ -14,7 +14,10 @@ use SilverStripe\View\Requirements;
  *
  * Configuration options:
  * - simpler_include_modal: Also load simpler-modal.js (default: false)
- * - simpler_skip_import_map_check: Skip the import map availability check (default: false)
+ *   Set on the OWNER (SilverStripe\Admin\LeftAndMain), read via $this->owner->config()
+ * - skip_import_map_check: Skip the import map availability check (default: false)
+ *   Set on Restruct\Silverstripe\Simpler\AdminExtension itself, read via static::config()
+ *   (this line used to name it simpler_skip_import_map_check, which nothing reads)
  *
  * @extends Extension<LeftAndMain>
  */

@@ -1,0 +1,253 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: SS${{ matrix.silverstripe }} / PHP ${{ matrix.php }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # One job per supported Silverstripe major, at the oldest and newest PHP that major is
+          # used with here. The module's composer.json is the source of truth for the supported
+          # range; this matrix must follow it. Silverstripe 4 is not supported and not tested.
+          # lekoala/silverstripe-pure-modal is only a composer "suggest", but it is installed on
+          # every leg so SimplerModalField/Action are tested and the test count is equal per major.
+          - silverstripe: '5'
+            php: '8.1'
+            recipe: '^5'
+            testing: '^3'
+            puremodal: '^1.2'
+          - silverstripe: '5'
+            php: '8.3'
+            recipe: '^5'
+            testing: '^3'
+            puremodal: '^1.2'
+          - silverstripe: '6'
+            php: '8.3'
+            recipe: '^6'
+            testing: '^4'
+            puremodal: '^2'
+          - silverstripe: '6'
+            php: '8.4'
+            recipe: '^6'
+            testing: '^4'
+            puremodal: '^2'
+
+    services:
+      database:
+        # MariaDB rather than MySQL: it matches both the local dev machine and the
+        # Forge servers, so a version-specific failure here means something real.
+        image: mariadb:11.4
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: ss_ci
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+
+    steps:
+      - name: Check out the module
+        uses: actions/checkout@v4
+        with:
+          path: module
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, intl, pdo_mysql, mysqli, gd, zip, dom, xml, tokenizer, simplexml, ctype, hash, session
+          tools: composer:v2
+          coverage: none
+
+      - name: Build a host project
+        # The module cannot be tested on its own: it needs a booted Silverstripe app.
+        # The module is required through a PATH repository pointing at the checkout, and
+        # symlinked rather than mirrored ON PURPOSE - `/tests` is `export-ignore` in
+        # .gitattributes, so a dist or mirrored install contains no tests at all.
+        run: |
+          mkdir -p app-host
+          cd app-host
+          cat > composer.json <<JSON
+          {
+            "name": "restruct/ci-host",
+            "require": {
+              "silverstripe/recipe-cms": "${{ matrix.recipe }}",
+              "silverstripe/recipe-testing": "${{ matrix.testing }}",
+              "lekoala/silverstripe-pure-modal": "${{ matrix.puremodal }}",
+              "restruct/silverstripe-simpler": "*"
+            },
+            "repositories": [
+              { "type": "path", "url": "../module", "options": { "symlink": true } }
+            ],
+            "autoload-dev": {
+              "psr-4": {
+                "Restruct\\\\Silverstripe\\\\Simpler\\\\Tests\\\\": "vendor/restruct/silverstripe-simpler/tests/"
+              }
+            },
+            "minimum-stability": "dev",
+            "prefer-stable": true,
+            "config": { "allow-plugins": true }
+          }
+          JSON
+          # Silverstripe 5 is in security-fixes-only until its April 2027 EOL, and every
+          # release of it is covered by advisory PKSA-pjvm-vnw2-n3m2 (range <6.2.1),
+          # which will not be patched there. Composer therefore refuses to install it
+          # under the default policy.
+          # Blocking is disabled HERE ONLY, in a throwaway CI host project, and only on SS5 legs.
+          if [ "${{ matrix.silverstripe }}" = "5" ]; then
+            composer config policy.advisories.block false
+          fi
+          composer update --no-interaction --no-progress
+
+      - name: Configure the test suite
+        run: |
+          cd app-host
+          cat > phpunit.xml <<'XML'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!-- Warning-to-error escalation is the RUNNER's behaviour and differs by PHPUnit
+               major: 9 (SS5) converts warnings by default through convertWarningsToExceptions,
+               11 (SS6) has no convertWarningsToExceptions attribute. failOnWarning exists in
+               both and is pinned so a warning behaves identically on every leg.
+               failOnEmptyTestSuite (both majors) makes a run that collects 0 tests fail. -->
+          <phpunit bootstrap="vendor/silverstripe/framework/tests/bootstrap.php" colors="true"
+                   failOnWarning="true" failOnEmptyTestSuite="true">
+              <testsuites>
+                  <testsuite name="simpler">
+                      <directory>vendor/restruct/silverstripe-simpler/tests</directory>
+                  </testsuite>
+                  <testsuite name="consumer">
+                      <directory>app/tests</directory>
+                  </testsuite>
+              </testsuites>
+          </phpunit>
+          XML
+
+      - name: Add a consumer-shape database test
+        # This module's tests/ ships a DataObject fixture (Tests\Stub\ToggleRecord). In a
+        # CONSUMING project's test run that fixture is in the class manifest and gets a table in
+        # the temp database; an unbuildable fixture (e.g. an abstract DataObject) would fatal
+        # every DB test there. The module's own suite cannot see that, so check it from a consumer.
+        run: |
+          mkdir -p app-host/app/tests
+          cat > app-host/app/tests/ConsumerDbTest.php <<'PHP'
+          <?php
+
+          use SilverStripe\Dev\SapphireTest;
+          use SilverStripe\Security\Member;
+
+          class ConsumerDbTest extends SapphireTest
+          {
+              protected $usesDatabase = true;
+
+              public function testTempDatabaseBuilds()
+              {
+                  $m = Member::create(['FirstName' => 'x']);
+                  $m->write();
+                  $this->assertGreaterThan(0, $m->ID);
+              }
+          }
+          PHP
+
+      - name: Run tests
+        working-directory: app-host
+        env:
+          SS_DATABASE_CLASS: MySQLDatabase
+          SS_DATABASE_SERVER: 127.0.0.1
+          SS_DATABASE_PORT: 3306
+          SS_DATABASE_USERNAME: root
+          SS_DATABASE_PASSWORD: root
+          SS_DATABASE_NAME: ss_ci
+          SS_ENVIRONMENT_TYPE: dev
+          # Flushing the test manifest: PHPUnit 11 (SS6) treats a bare `flush=1` as a test path, so SS6
+          # legs flush through this variable. It is INERT on framework 5: the SS5 legs are not
+          # flushed by it and rely on the runner being fresh (no manifest cache exists yet).
+          # The SS5 legs therefore flush explicitly with a trailing `flush=1` (see below).
+          SS_PHPUNIT_FLUSH: 1
+        run: |
+          # An empty run must fail on every leg: a suite that silently collects 0 tests (wrong
+          # path, export-ignored tests/, a mirrored instead of symlinked install) otherwise
+          # exits 0 and the leg goes green having tested nothing.
+          if [ "${{ matrix.silverstripe }}" = "5" ]; then
+            # SS5 / PHPUnit 9: `flush=1` only works AFTER a path argument; combined with
+            # --testsuite PHPUnit reads it as a file and aborts ("Cannot open file"). So the
+            # suites run by path, with the trailing flush=1. PHPUnit 9.6 accepts
+            # --fail-on-empty-test-suite too (it is not listed in its --help): without it,
+            # "No tests executed!" exits 0.
+            vendor/bin/phpunit --fail-on-empty-test-suite vendor/restruct/silverstripe-simpler/tests flush=1
+            vendor/bin/phpunit --fail-on-empty-test-suite app/tests flush=1
+          else
+            # SS6 / PHPUnit 11: flushed by SS_PHPUNIT_FLUSH above, which combines with --testsuite.
+            vendor/bin/phpunit --testsuite simpler --fail-on-empty-test-suite
+            vendor/bin/phpunit --testsuite consumer --fail-on-empty-test-suite
+          fi
+
+      - name: Boot the app and build the database
+        # The suite proves the classes behave; this proves the module does not break a real boot.
+        working-directory: app-host
+        env:
+          SS_DATABASE_CLASS: MySQLDatabase
+          SS_DATABASE_SERVER: 127.0.0.1
+          SS_DATABASE_PORT: 3306
+          SS_DATABASE_USERNAME: root
+          SS_DATABASE_PASSWORD: root
+          SS_DATABASE_NAME: ss_ci
+          SS_ENVIRONMENT_TYPE: dev
+        run: |
+          if [ "${{ matrix.silverstripe }}" = "5" ]; then
+            vendor/bin/sake dev/build flush=1
+          else
+            vendor/bin/sake db:build --flush
+            vendor/bin/sake config:audit
+          fi
+
+  client:
+    # client/dist is committed, so it must match client/src. The modal bundle also carries the
+    # Bootstrap 4 AND Bootstrap 5 modal and picks one at runtime; tests/js/modal-smoke.mjs checks
+    # that wiring in jsdom for both (not a browser: no layout, no CSS transitions).
+    name: Client bundles
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install (from yarn.lock)
+        run: yarn install --frozen-lockfile --non-interactive
+      - name: Rebuild and check client/dist is up to date
+        run: |
+          yarn production
+          git diff --exit-code -- client/dist
+      - name: Modal smoke test (Bootstrap 4 and 5 paths)
+        run: yarn test
+
+  lint:
+    name: Lint PHP ${{ matrix.php }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The floor and the ceiling of the module's declared php constraint.
+        php: ['8.1', '8.3', '8.4']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+      - name: Syntax check every PHP file
+        # php -l exits 0 on a compile-time deprecation (e.g. PHP 8.4's implicitly nullable
+        # parameter), so the output is checked for "Deprecated" as well.
+        run: |
+          out=$(find src tests -name '*.php' -print0 | xargs -0 -n1 php -l 2>&1)
+          echo "$out"
+          ! echo "$out" | grep -qE "Deprecated|Parse error|Fatal error"
