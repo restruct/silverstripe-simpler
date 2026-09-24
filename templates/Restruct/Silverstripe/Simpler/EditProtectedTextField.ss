@@ -17,7 +17,7 @@
     <div class="input-group-append">
         <button v-show="!editing"
                 type="button"
-                class="btn btn-outline-secondary font-icon-edit-write icon-only"
+                class="btn btn-outline-secondary font-icon-edit-write icon-only rounded-right"
                 @click="startEditing"
                 title="<%t EditProtectedTextField.Edit 'Edit' %>">
         </button>

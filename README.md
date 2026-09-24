@@ -11,6 +11,8 @@ Makes SilverStripe Admin development simpler by re-introducing traditional basic
 | **DOM Events** - `DOMNodesInserted`/`DOMNodesRemoved` for dynamic content | ~5kb | Always | Core bundle |
 | **Vue 3 Import Map** - Use Vue in your own ES modules | ~162kb | Opt-in | AdminExtension |
 | **Modal Dialog** - Bootstrap modal via `simpler.modal` | ~24kb | Opt-in | Requires import map |
+| **GridField Modals** - Toolbar/row buttons with modal forms | - | Opt-in | PHP only, uses Modal Dialog |
+| **GridField Toggle** - Row buttons to cycle field values | - | Opt-in | PHP only, no dependencies |
 
 **Total sizes:**
 - DOM events only: ~5kb (always loaded)
@@ -308,7 +310,165 @@ use Restruct\Silverstripe\Simpler\SimplerModalAction as PureModalAction;
 
 All existing code continues to work - same API, better rendering.
 
-## 5. Static session helpers
+## 5. GridField modal components
+
+Two components for modals in GridField context (not available in PureModal or cms-actions):
+
+### GridFieldToolbarModalAction (toolbar buttons)
+
+For toolbar buttons that open a modal with form fields, submitting through GridField action routing:
+
+```php
+use Restruct\Silverstripe\Simpler\GridFieldToolbarModalAction;
+
+// Extend and override handleAction():
+class MyGridFieldAction extends GridFieldToolbarModalAction
+{
+    public function __construct()
+    {
+        parent::__construct('myaction', 'Do Something');
+        $this->setDialogTitle('Configure Action');
+        $this->setSubmitLabel('Apply');
+        $this->setButtonIcon('rocket');
+        $this->setFieldList(FieldList::create([
+            DropdownField::create('Option', 'Choose', $options),
+            NumericField::create('Count', 'How many'),
+        ]));
+    }
+
+    public function handleAction(GridField $gridField, $actionName, $arguments, $data)
+    {
+        if ($actionName !== 'myaction') {
+            return;
+        }
+        $option = $data['Option'] ?? null;
+        $count = (int) ($data['Count'] ?? 1);
+        // Do something with the form data...
+    }
+}
+
+// Add to GridField config:
+$config->addComponent(new MyGridFieldAction());
+```
+
+**Key difference from SimplerModalAction:**
+- `SimplerModalAction` is for DataObject edit forms (`getCMSActions()`)
+- `GridFieldToolbarModalAction` is for GridField toolbars (action routing via StateID)
+
+**Why this exists:** Neither `lekoala/silverstripe-pure-modal` nor `lekoala/silverstripe-cms-actions` provide this functionality. PureModalAction only works in detail forms, and GridFieldTableButton only supports basic JS `prompt()`/`confirm()` dialogs.
+
+#### Error handling
+
+The AJAX handler reads the response body on HTTP errors and displays it in the modal. Throw `HTTPResponse_Exception` to show a meaningful error:
+
+```php
+use SilverStripe\Control\HTTPResponse;
+use SilverStripe\Control\HTTPResponse_Exception;
+
+// In handleAction():
+try {
+    // ... do work
+} catch (\Exception $e) {
+    throw new HTTPResponse_Exception(new HTTPResponse($e->getMessage(), 422));
+}
+```
+
+#### Full page reload (X-Reload header)
+
+By default, on success the modal reloads only the parent GridField. To force a full page reload (e.g., when other tabs also need refreshing), set the `X-Reload` header:
+
+```php
+Controller::curr()->getResponse()->addHeader('X-Reload', 'true');
+```
+
+### GridFieldModalButton (per-row column buttons)
+
+For per-row buttons in a GridField column that open a view-only modal:
+
+```php
+use Restruct\Silverstripe\Simpler\GridFieldModalButton;
+
+class MyDetailButton extends GridFieldModalButton
+{
+    protected function getButtonLabel(DataObject $record): string
+    {
+        return 'Details';
+    }
+
+    protected function getModalTitle(DataObject $record): string
+    {
+        return 'Details for ' . $record->Title;
+    }
+
+    protected function getModalContent(DataObject $record): string
+    {
+        return '<p>' . htmlspecialchars($record->Description) . '</p>';
+    }
+
+    protected function shouldShowButton(DataObject $record): bool
+    {
+        return $record->canView();
+    }
+}
+
+// Add to GridField config:
+$config->addComponent(new MyDetailButton());
+```
+
+### GridFieldToggleFieldButton (row toggle buttons)
+
+For per-row buttons that cycle a field through values (boolean or multi-state):
+
+```php
+use Restruct\Silverstripe\Simpler\GridFieldToggleFieldButton;
+use Restruct\Silverstripe\Simpler\GridFieldToggleIsActiveButton;
+
+// Simple boolean toggle for IsActive field (pre-configured)
+$config->addComponent(GridFieldToggleIsActiveButton::create());
+
+// Generic boolean toggle for any field
+$config->addComponent(GridFieldToggleFieldButton::create('IsPublished'));
+
+// Multi-state toggle (cycles through values in order)
+$config->addComponent(
+    GridFieldToggleFieldButton::create('Status')
+        ->setStates([
+            'draft' => ['icon' => 'edit', 'title' => 'Submit for Review'],
+            'review' => ['icon' => 'eye', 'title' => 'Publish'],
+            'published' => ['icon' => 'check-mark', 'title' => 'Archive'],
+            'archived' => ['icon' => 'archive', 'title' => 'Reset to Draft'],
+        ])
+        ->setConfirmMessage('Change status?')
+);
+```
+
+**Advanced options:**
+
+```php
+GridFieldToggleFieldButton::create('IsActive')
+    // Custom state rendering via callback
+    ->setStateRenderer(function(DataObject $record, $currentValue) {
+        return [
+            'icon' => $record->getStatusIcon(),
+            'title' => $record->getNextStatusLabel(),
+            'buttonClass' => $currentValue ? 'text-success' : 'text-muted',
+        ];
+    })
+    // Visibility check
+    ->setShouldShow(fn($record) => $record->canEdit())
+    // Custom toggle logic (called before save)
+    ->setToggleAction(function(DataObject $record, $newValue) {
+        $record->IsActive = $newValue;
+        $record->StatusChangedDate = DBDatetime::now();
+        $record->StatusChangedBy = Security::getCurrentUser()->ID;
+    })
+    // Confirmation dialog
+    ->setConfirmMessage('Are you sure?')
+    // Use writeWithoutVersion() for versioned records (default: true)
+    ->setWriteWithoutVersion(true);
+```
+
+## 6. Static Session helpers
 
 ```php
 use Restruct\Silverstripe\Simpler\Session;
@@ -320,7 +480,7 @@ Session::clear('key');
 Session::clearAll();
 ```
 
-## 6. HeadRequirements (import maps, early scripts)
+## 7. HeadRequirements (import maps, early scripts)
 
 For scripts that must be in `<head>` (import maps, early config):
 
@@ -341,7 +501,7 @@ HeadRequirements::custom_script('window.CONFIG = { debug: true }', 'my-config');
 
 Also available as template globals: `$HeadReq_importMap()`, `$HeadReq_js()`, `$HeadReq_customScript()`.
 
-## 7. Configuration summary
+## 8. Configuration summary
 
 ```yaml
 # Default (auto-applied by module):
@@ -373,7 +533,23 @@ SilverStripe\Admin\LeftAndMain:
     - 'restruct/silverstripe-simpler:client/dist/js/simpler-modal.js': { type: module }
 ```
 
-## 8. Development
+## 9. Development
+
+### Local git checkout
+
+When developing this module locally (checked out as git repo instead of installed via composer), you need to add the autoload path to your project's `composer.json`:
+
+```json
+"autoload": {
+    "psr-4": {
+        "Restruct\\Silverstripe\\Simpler\\": "_git_simpler/src/"
+    }
+}
+```
+
+Then run `composer dump-autoload`. This is required because composer doesn't automatically discover classes in local module directories - it only knows about paths defined in its autoload config.
+
+### Building assets
 
 ### Local git checkout
 

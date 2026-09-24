@@ -19,6 +19,14 @@
             "Restruct\\Silverstripe\\Simpler\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Restruct\\Silverstripe\\Simpler\\Tests\\": "tests/"
+        }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.6"
+    },
     "extra": {
         "expose": [
             "client/dist"

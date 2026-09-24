@@ -20,12 +20,16 @@ Makes SilverStripe Admin development simpler by re-introducing traditional basic
 a-simpler/
 ├── _config/config.yml              # Auto-loads core, opt-in for modal/import map
 ├── src/
-│   ├── Session.php                 # Static session accessor class
-│   ├── HeadRequirements.php        # Static helpers for head JS (import maps, early scripts)
-│   ├── AdminExtension.php          # Injects Vue 3 import map (opt-in)
-│   ├── EditProtectedTextField.php  # TextField with edit toggle (Vue)
-│   ├── SimplerModalField.php       # Drop-in PureModal replacement
-│   └── SimplerModalAction.php      # Drop-in PureModalAction replacement
+│   ├── Session.php                     # Static session accessor class
+│   ├── HeadRequirements.php            # Static helpers for head JS (import maps, early scripts)
+│   ├── AdminExtension.php              # Injects Vue 3 import map (opt-in)
+│   ├── EditProtectedTextField.php      # TextField with edit toggle (Vue)
+│   ├── SimplerModalField.php           # Drop-in PureModal replacement
+│   ├── SimplerModalAction.php          # Drop-in PureModalAction replacement
+│   ├── GridFieldToolbarModalAction.php # GridField toolbar button with modal (form or view-only)
+│   ├── GridFieldModalButton.php        # GridField column button with modal (per-row)
+│   ├── GridFieldToggleFieldButton.php  # GridField row button to toggle field values
+│   └── GridFieldToggleIsActiveButton.php # Pre-configured toggle for IsActive field
 ├── templates/Restruct/Silverstripe/Simpler/
 │   ├── EditProtectedTextField.ss   # Vue-powered edit toggle field
 │   ├── SimplerModalField.ss        # Button with data-simpler-modal attribute
@@ -252,7 +256,11 @@ SimplerModalField::create('preview', 'Preview')
     ->setIframeHeight('80vh')
     ->setModalSize('xl')  // 'sm', 'lg', 'xl' or '800px', '90vw'
     ->setCloseBtn(false)  // Hide footer close button (default: true)
-    ->setButtonIcon('eye');
+    ->setButtonIcon('eye');  // 'ss' prefix (default) = font-icon-, 'bs' = bi bi-
+
+// With Bootstrap Icons:
+SimplerModalField::create('viewpdf', 'View PDF')
+    ->setButtonIcon('file-pdf', 'bs');  // → bi bi-file-pdf
 
 // HTML content
 SimplerModalField::create('info', 'Info')
@@ -283,6 +291,165 @@ Generic click handler in simpler-modal.js opens modal from data attribute.
 - `saveBtn` (bool) - Show save/primary button
 - `saveTxt` (string) - Save button text
 - `static` (bool) - Prevent closing via backdrop click or Escape
+
+### 3c. GridField Modal Components
+
+GridField-specific modal components for different use cases:
+
+#### GridFieldToolbarModalAction (toolbar buttons)
+
+Toolbar buttons that open a modal. Supports two modes:
+1. **Form mode**: Modal with form fields + submit button (set `setFieldList()`)
+2. **View-only mode**: Modal with static content, no buttons (set `setIframeSrc()` or `setBodyHtml()`)
+
+```php
+use Restruct\Silverstripe\Simpler\GridFieldToolbarModalAction;
+
+// Form mode - extend and override handleAction():
+class MyGridFieldAction extends GridFieldToolbarModalAction
+{
+    public function __construct()
+    {
+        parent::__construct('myaction', 'Do Something');
+        $this->setDialogTitle('Configure Action');
+        $this->setSubmitLabel('Apply');
+        $this->setButtonIcon('rocket');
+        $this->setFieldList(FieldList::create([
+            DropdownField::create('Option', 'Choose', $options),
+            NumericField::create('Count', 'How many'),
+        ]));
+    }
+
+    public function handleAction(GridField $gridField, $actionName, $arguments, $data)
+    {
+        if ($actionName !== 'myaction') return;
+        $option = $data['Option'] ?? null;
+        $count = (int) ($data['Count'] ?? 1);
+        // Do something with the form data...
+    }
+}
+
+// View-only mode - iframe content (e.g., PDF viewer):
+$config->addComponent(
+    GridFieldToolbarModalAction::create('viewpdf', 'View PDF')
+        ->setIframeSrc('/path/to/document.pdf')
+        ->setIframeHeight('85vh')
+        ->setModalSize('60vw')
+        ->setButtonIcon('file-pdf', 'bs')  // 'ss' (default) = font-icon-, 'bs' = bi bi-
+        ->setButtonClasses('btn btn-outline-info')
+);
+
+// View-only mode - HTML content:
+$config->addComponent(
+    GridFieldToolbarModalAction::create('preview', 'Preview')
+        ->setBodyHtml('<div class="preview">...</div>')
+);
+```
+
+Key difference from SimplerModalAction:
+- **SimplerModalAction** is for DataObject edit forms (FieldList in form actions area)
+- **GridFieldToolbarModalAction** is for GridField toolbars (action routing via StateID)
+
+**Error handling:** The AJAX handler reads the response body on HTTP errors and displays it in the modal. To show a meaningful error message, throw an `HTTPResponse_Exception` with a plain-text body:
+
+```php
+use SilverStripe\Control\HTTPResponse;
+use SilverStripe\Control\HTTPResponse_Exception;
+
+public function handleAction(GridField $gridField, $actionName, $arguments, $data)
+{
+    try {
+        // ... do work
+    } catch (\Exception $e) {
+        throw new HTTPResponse_Exception(
+            new HTTPResponse($e->getMessage(), 422),
+        );
+    }
+}
+```
+
+**Full page reload:** By default, on success the modal reloads only the parent GridField. To force a full page reload (e.g., when other tabs also need refreshing), set the `X-Reload` response header:
+
+```php
+use SilverStripe\Control\Controller;
+
+// In handleAction(), after successful work:
+Controller::curr()->getResponse()->addHeader('X-Reload', 'true');
+```
+
+#### GridFieldModalButton (row buttons)
+
+For per-row buttons in a GridField column that open a modal:
+
+```php
+use Restruct\Silverstripe\Simpler\GridFieldModalButton;
+
+class MyDetailButton extends GridFieldModalButton
+{
+    protected function getButtonLabel(DataObject $record): string
+    {
+        return 'Details';
+    }
+
+    protected function getModalTitle(DataObject $record): string
+    {
+        return 'Details for ' . $record->Title;
+    }
+
+    protected function getModalContent(DataObject $record): string
+    {
+        return '<p>' . htmlspecialchars($record->Description) . '</p>';
+    }
+
+    protected function shouldShowButton(DataObject $record): bool
+    {
+        return $record->canView();
+    }
+}
+
+// Add to GridField config:
+$config->addComponent(new MyDetailButton());
+```
+
+#### GridFieldToggleFieldButton (row toggle buttons)
+
+For per-row buttons that cycle a field through values:
+
+```php
+use Restruct\Silverstripe\Simpler\GridFieldToggleFieldButton;
+use Restruct\Silverstripe\Simpler\GridFieldToggleIsActiveButton;
+
+// Pre-configured for IsActive boolean field
+$config->addComponent(GridFieldToggleIsActiveButton::create());
+
+// Generic boolean toggle
+$config->addComponent(GridFieldToggleFieldButton::create('IsPublished'));
+
+// Multi-state cycling
+$config->addComponent(
+    GridFieldToggleFieldButton::create('Status')
+        ->setStates([
+            'draft' => ['icon' => 'edit', 'title' => 'Submit for Review'],
+            'review' => ['icon' => 'eye', 'title' => 'Publish'],
+            'published' => ['icon' => 'check-mark', 'title' => 'Archive'],
+            // Optional: 'iconPrefix' => 'bs' for Bootstrap Icons, 'ss' (default) for font-icon-
+        ])
+        ->setConfirmMessage('Change status?')
+);
+
+// With callbacks
+GridFieldToggleFieldButton::create('IsActive')
+    ->setStateRenderer(fn($record, $value) => [
+        'icon' => $record->getStatusIcon(),
+        'iconPrefix' => 'bs',  // 'ss' (default), 'bs', or false
+        'title' => $record->getNextStatusLabel(),
+    ])
+    ->setShouldShow(fn($record) => $record->canEdit())
+    ->setToggleAction(function($record, $newValue) {
+        $record->IsActive = $newValue;
+        $record->ModifiedDate = DBDatetime::now();
+    });
+```
 
 ### 4. EditProtectedTextField
 
