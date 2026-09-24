@@ -166,7 +166,7 @@ jobs:
           SS_DATABASE_PASSWORD: root
           SS_DATABASE_NAME: ss_ci
           SS_ENVIRONMENT_TYPE: dev
-          # Flushing the test manifest: PHPUnit 11 (SS6) ignores a `flush=1` argument, so SS6
+          # Flushing the test manifest: PHPUnit 11 (SS6) treats a bare `flush=1` as a test path, so SS6
           # legs flush through this variable. It is INERT on framework 5: the SS5 legs are not
           # flushed by it and rely on the runner being fresh (no manifest cache exists yet).
           # The SS5 legs therefore flush explicitly with a trailing `flush=1` (see below).
