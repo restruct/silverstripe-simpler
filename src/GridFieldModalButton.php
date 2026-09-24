@@ -56,8 +56,14 @@ class GridFieldModalButton implements GridField_ColumnProvider
 
     /**
      * CSS classes for the button
+     *
+     * No `action` class here (restruct/silverstripe-simpler#5): silverstripe/admin's GridField.js binds
+     * `.grid-field .action:button` to an AJAX reload of the whole GridField, which then ran on every
+     * click before the modal opened. The row-click exemption only needs `.action` on an ancestor,
+     * so getColumnContent() wraps the button in `<span class="action">` instead.
      */
-    protected string $buttonClasses = 'btn btn-sm btn-outline-info action';
+    // protected string $buttonClasses = 'btn btn-sm btn-outline-info action';
+    protected string $buttonClasses = 'btn btn-sm btn-outline-info';
 
     /**
      * Modal size: 'sm', 'lg', 'xl' or custom CSS value like '800px', '90vw'
@@ -199,8 +205,10 @@ class GridFieldModalButton implements GridField_ColumnProvider
             'UTF-8'
         );
 
+        # The wrapping span.action keeps GridField's row-click (open the record) from firing,
+        # without making the button itself an admin AJAX action button (see $buttonClasses)
         return sprintf(
-            '<button type="button" class="%s" data-simpler-modal=\'%s\'>%s</button>',
+            '<span class="action"><button type="button" class="%s" data-simpler-modal=\'%s\'>%s</button></span>',
             htmlspecialchars($this->buttonClasses),
             $configJson,
             htmlspecialchars($this->getButtonLabel($record))

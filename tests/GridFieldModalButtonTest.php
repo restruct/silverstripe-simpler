@@ -104,6 +104,25 @@ class GridFieldModalButtonTest extends SapphireTest
         $this->assertSame('', (new TestModalButton())->getColumnContent($gridField, $record, 'ModalAction'));
     }
 
+    /**
+     * Regression, restruct/silverstripe-simpler#5: silverstripe/admin binds `.grid-field .action:button`
+     * to an AJAX GridField reload, so a button carrying `action` reloaded the grid on every click.
+     * The row-click exemption only needs `.action` on an ANCESTOR of the click target, so the
+     * button sits inside a `<span class="action">` and does not carry the class itself.
+     */
+    public function testRowButtonIsNotAnAdminActionButton(): void
+    {
+        $record = $this->record('Gamma', true);
+        $gridField = GridField::create('Records', 'Records', ToggleRecord::get());
+
+        $button = $this->button((new TestModalButton())->getColumnContent($gridField, $record, 'ModalAction'));
+
+        $this->assertNotContains('action', explode(' ', $button->getAttribute('class')));
+        $wrapper = $button->parentNode;
+        $this->assertSame('span', $wrapper->nodeName);
+        $this->assertContains('action', explode(' ', $wrapper->getAttribute('class')));
+    }
+
     public function testCustomColumnNameAndClasses(): void
     {
         $record = $this->record('Beta', true);
