@@ -1,20 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<phpunit
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
-    bootstrap="vendor/silverstripe/framework/tests/bootstrap.php"
-    colors="true"
->
+<!--
+  A TEMPLATE for a host project, not a config this module runs with: PHPUnit resolves `bootstrap`
+  and `<directory>` relative to this file, and the module has no vendor/ of its own, so neither
+  `vendor/bin/phpunit` in the module root nor `-c vendor/restruct/silverstripe-simpler/phpunit.xml.dist`
+  from a host works. Nothing in this repository reads it; CI writes the equivalent into its host.
+  Use: copy it to the root of a HOST project that requires this module (path repository,
+  symlink: true - a dist install has no tests/), then from that root:
+    SS5: vendor/bin/phpunit -c phpunit.xml.dist vendor/restruct/silverstripe-simpler/tests flush=1
+    SS6: SS_PHPUNIT_FLUSH=1 vendor/bin/phpunit -c phpunit.xml.dist
+  (SS5 needs an explicit path before flush=1: PHPUnit 9 reads a bare trailing argument as a file
+  path, so a testsuite-only run with flush=1 fails with 'Cannot open file'. PHPUnit 11 (SS6) also
+  reads a bare flush=1 as a test path, so SS6 flushes through SS_PHPUNIT_FLUSH=1 instead.)
+  Install lekoala/silverstripe-pure-modal in the host too (^1.2 on SS5, ^2 on SS6): without it the
+  SimplerModalField/SimplerModalAction tests are skipped and the count differs from CI.
+  The database comes from the host's .env (the tests use a temporary database); this module does
+  not require SQLite.
+  failOnWarning is pinned because warning escalation differs between PHPUnit 9 (SS5) and 11 (SS6).
+-->
+<phpunit bootstrap="vendor/silverstripe/framework/tests/bootstrap.php" colors="true" failOnWarning="true">
     <testsuites>
-        <testsuite name="Default">
-            <directory>tests</directory>
+        <testsuite name="simpler">
+            <directory>vendor/restruct/silverstripe-simpler/tests</directory>
         </testsuite>
     </testsuites>
-    <php>
-        <env name="SS_ENVIRONMENT_TYPE" value="dev"/>
-        <env name="SS_DATABASE_CLASS" value="SilverStripe\SQLite3\SQLite3Database"/>
-        <env name="SS_DATABASE_NAME" value=":memory:"/>
-        <env name="SS_DATABASE_SERVER" value=""/>
-        <env name="SS_DATABASE_MEMORY" value="1"/>
-    </php>
 </phpunit>

@@ -69,6 +69,9 @@ then shortcodable.
   request proves the import map, the core bundle and the opt-in modal load; the modal field/action
   config and rendered buttons; the GridField components against real records; HeadRequirements and
   the Session helpers.
+- `phpunit.xml.dist` is now a template for a host project (copy it to the host root; the header says
+  how to run it on each major). The old file pointed at SQLite3, which is not required, and could not
+  run from the module root anyway.
 - `tests/js/modal-smoke.mjs` (`yarn test`) checks the modal's Bootstrap 4 and Bootstrap 5 paths in
   jsdom.
 - GitHub Actions: one job per supported Silverstripe major, a PHP lint job (fails on compile-time
