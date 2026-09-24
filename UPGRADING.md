@@ -42,11 +42,15 @@ has its own major per Silverstripe major: `^1.2` on Silverstripe 5, `^2` on Silv
    because a title built from record data was an XSS path into the CMS. A title that relied on HTML
    (an icon `<i class="...">`, `<b>`, `<br>`) now shows the tags as text. Put an icon on the button
    with `setButtonIcon('name', 'ss'|'bs'|false)` instead, and keep the title plain text. To find
-   candidates:
+   candidates, list every use of the class and read the title each one sets, whether through
+   `create()`, `setTitle()`, `_t()` or a variable:
 
    ```bash
-   grep -rn "SimplerModalAction::create(.*<" app/ src/ --include='*.php'
+   grep -rn "SimplerModalAction" app/ src/ --include='*.php'
    ```
+
+   A narrower grep such as `SimplerModalAction::create(.*<` only catches HTML written inline in a
+   one-line `create()` call and misses the rest.
 
    If a project really needs HTML there, override the template
    `Restruct/Silverstripe/Simpler/SimplerModalAction.ss` in the theme, and make sure no part of that
