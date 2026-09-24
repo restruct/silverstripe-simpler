@@ -8,6 +8,11 @@ branch (tags `0.3.x`, `silverstripe/framework ^4 || ^5`) and an untagged Silvers
 Silverstripe 4 is no longer supported; projects on it can stay on the `0.x` tags.
 Upgrade guide: [UPGRADING.md](UPGRADING.md).
 
+**Waiting on this release:** `restruct/silverstripe-shortcodable` (5.1.0, Silverstripe 5 and 6)
+requires `restruct/silverstripe-simpler ~0.2 || ^1`. The `0.x` tags only allow Silverstripe 4 and 5,
+so on Silverstripe 6 shortcodable cannot be installed until this 1.0.0 is tagged. Tag simpler first,
+then shortcodable.
+
 ### Changed
 
 - **The modal bundle carries both Bootstrap majors.** The CMS ships Bootstrap 4 CSS on Silverstripe 5
