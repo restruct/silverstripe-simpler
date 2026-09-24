@@ -20,6 +20,10 @@ then shortcodable.
   the Bootstrap 4 jQuery plugin (exactly as in `0.3.x`) and the Bootstrap 5 modal, and picks one at
   runtime from the page's CSS. On Silverstripe 5, `$.fn.modal` is the Bootstrap 4 plugin as before.
   The bundle grew from ~22kb to ~42kb (compared with `0.3.7`).
+- `simpler-modal.js` **requires jQuery** (as a global), and now says so. It carried a "no jQuery, fall
+  back to Bootstrap 5" guard that could never run: the bundle's top-level Bootstrap 4 import throws
+  without jQuery before it is reached. The guard is removed (kept commented out in the source); both
+  admins ship jQuery, so nothing changes on Silverstripe 5 or 6.
 - **Dismissing the modal** goes through a `data-simpler-dismiss` attribute, and Bootstrap's own
   `data-dismiss="modal"` / `data-bs-dismiss="modal"` are honoured on both majors. Before, HTML written
   for one major did not close the modal on the other (the GridField toolbar form's cancel button used

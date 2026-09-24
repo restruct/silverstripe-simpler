@@ -2,6 +2,8 @@
 // - Bootstrap modal, for BOTH admin Bootstrap majors (see "Bootstrap adapters" below)
 // - Vue 3 reactive modal app
 // Requires simpler-silverstripe.js to be loaded first (provides window.simpler)
+// Requires jQuery as a global (window.jQuery): the Bootstrap 4 plugin below is imported at the top
+// level and throws on load without it. Both admins (SS5 and SS6) ship jQuery.
 
 // Why two Bootstrap modal implementations in one bundle:
 // this module supports Silverstripe 5 AND 6 from one release line. The CMS ships Bootstrap 4 CSS
@@ -52,12 +54,18 @@ const ui = reactive({ bs5: true });
  * Bootstrap 5 declares its CSS custom properties with a `--bs-` prefix on :root (`--bs-blue`);
  * Bootstrap 4 uses unprefixed ones (`--blue`). Checked against both admin bundles in SSKB's source
  * trees: silverstripe/admin 3 (SS6) bundle.css has `--bs-blue`, admin 2 (SS5) has `--blue` only.
- * Without jQuery the Bootstrap 4 plugin cannot run at all, so fall back to Bootstrap 5 then.
+ *
+ * Requires jQuery: this bundle imports the Bootstrap 4 jQuery plugin at the top level, which throws
+ * on load when window.jQuery is missing, so this function never runs without jQuery.
+ * (Was: "Without jQuery the Bootstrap 4 plugin cannot run at all, so fall back to Bootstrap 5 then."
+ * That fallback below was dead code for the reason above; making it real needs a lazy Bootstrap 4
+ * import, tracked as a separate enhancement.)
  */
 function bootstrapIsV5() {
-    if (!window.jQuery || !window.jQuery.fn || !window.jQuery.fn.modal) {
-        return true;
-    }
+    // Dead no-jQuery guard, unreachable (the top-level Bootstrap 4 import throws first without jQuery):
+    // if (!window.jQuery || !window.jQuery.fn || !window.jQuery.fn.modal) {
+    //     return true;
+    // }
     const rootStyle = getComputedStyle(document.documentElement);
     return rootStyle.getPropertyValue('--bs-blue').trim() !== '';
 }
