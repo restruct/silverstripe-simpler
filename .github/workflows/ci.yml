@@ -115,10 +115,12 @@ jobs:
           cat > phpunit.xml <<'XML'
           <?xml version="1.0" encoding="UTF-8"?>
           <!-- Warning-to-error escalation is the RUNNER's behaviour and differs by PHPUnit
-               major: 9 (SS5) converts warnings by default, 11 (SS6) has no such attribute.
-               failOnWarning is pinned so a warning behaves identically on every leg. -->
+               major: 9 (SS5) converts warnings by default through convertWarningsToExceptions,
+               11 (SS6) has no convertWarningsToExceptions attribute. failOnWarning exists in
+               both and is pinned so a warning behaves identically on every leg.
+               failOnEmptyTestSuite (both majors) makes a run that collects 0 tests fail. -->
           <phpunit bootstrap="vendor/silverstripe/framework/tests/bootstrap.php" colors="true"
-                   failOnWarning="true">
+                   failOnWarning="true" failOnEmptyTestSuite="true">
               <testsuites>
                   <testsuite name="simpler">
                       <directory>vendor/restruct/silverstripe-simpler/tests</directory>
@@ -178,22 +180,11 @@ jobs:
           if [ "${{ matrix.silverstripe }}" = "5" ]; then
             # SS5 / PHPUnit 9: `flush=1` only works AFTER a path argument; combined with
             # --testsuite PHPUnit reads it as a file and aborts ("Cannot open file"). So the
-            # suites run by path. PHPUnit 9 has no --fail-on-empty-test-suite and exits 0 on
-            # "No tests executed!", so the output is checked for that line.
-            run_ss5() {
-              status=0
-              out=$(vendor/bin/phpunit "$1" flush=1 2>&1) || status=$?
-              echo "$out"
-              if [ "$status" -ne 0 ]; then
-                return "$status"
-              fi
-              if echo "$out" | grep -q "No tests executed!"; then
-                echo "::error::No tests executed in $1"
-                return 1
-              fi
-            }
-            run_ss5 vendor/restruct/silverstripe-simpler/tests
-            run_ss5 app/tests
+            # suites run by path, with the trailing flush=1. PHPUnit 9.6 accepts
+            # --fail-on-empty-test-suite too (it is not listed in its --help): without it,
+            # "No tests executed!" exits 0.
+            vendor/bin/phpunit --fail-on-empty-test-suite vendor/restruct/silverstripe-simpler/tests flush=1
+            vendor/bin/phpunit --fail-on-empty-test-suite app/tests flush=1
           else
             # SS6 / PHPUnit 11: flushed by SS_PHPUNIT_FLUSH above, which combines with --testsuite.
             vendor/bin/phpunit --testsuite simpler --fail-on-empty-test-suite

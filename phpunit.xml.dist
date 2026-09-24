@@ -16,8 +16,11 @@
   The database comes from the host's .env (the tests use a temporary database); this module does
   not require SQLite.
   failOnWarning is pinned because warning escalation differs between PHPUnit 9 (SS5) and 11 (SS6).
+  failOnEmptyTestSuite makes a run that collects 0 tests (e.g. tests/ missing from a dist install)
+  exit non-zero instead of a silent green "No tests executed!".
 -->
-<phpunit bootstrap="vendor/silverstripe/framework/tests/bootstrap.php" colors="true" failOnWarning="true">
+<phpunit bootstrap="vendor/silverstripe/framework/tests/bootstrap.php" colors="true" failOnWarning="true"
+         failOnEmptyTestSuite="true">
     <testsuites>
         <testsuite name="simpler">
             <directory>vendor/restruct/silverstripe-simpler/tests</directory>
