@@ -1,6 +1,37 @@
 # Simpler Silverstripe
 
+*Maintained by [Restruct](https://github.com/restruct). If this module saves you time, you can
+[support ongoing maintenance](https://github.com/sponsors/restruct).*
+
 Makes SilverStripe Admin development simpler by re-introducing traditional basics.
+
+## Requirements
+
+* Silverstripe 5 or 6 (`silverstripe/framework ^5 || ^6`)
+* PHP 8.1 or newer
+* Optional: `lekoala/silverstripe-pure-modal` for `SimplerModalField` / `SimplerModalAction`
+  (`^1.2` on Silverstripe 5, `^2` on Silverstripe 6)
+
+## Installation
+
+```
+composer require restruct/silverstripe-simpler
+```
+
+## Version compatibility
+
+| Branch | Module version | Silverstripe | PHP |
+|--------|----------------|--------------|-----|
+| `main` | `1.x` | `^5 \|\| ^6` | `^8.1` |
+| `ss5` | `0.3.x` | `^4 \|\| ^5` | as Silverstripe requires |
+| (tags only) | `0.1.9` | `^4 \|\| ^5` (Vue 2, legacy) | as Silverstripe requires |
+
+`main` is the maintained line: one release line serves both Silverstripe 5 and 6, so there is no
+separate Silverstripe 6 branch. Silverstripe 4 reached end of life in April 2025 and is no longer
+supported or tested here; projects still on it can stay on the `0.x` tags, which remain available.
+Upgrading from 0.3.x: see [UPGRADING.md](UPGRADING.md) and [CHANGELOG.md](CHANGELOG.md).
+
+**`composer.json` is the source of truth** for exact constraints; this table is a quick reference.
 
 ## Features
 
@@ -10,14 +41,14 @@ Makes SilverStripe Admin development simpler by re-introducing traditional basic
 | **HeadRequirements** - Import maps and early scripts in `<head>` | - | Always | PHP + templates |
 | **DOM Events** - `DOMNodesInserted`/`DOMNodesRemoved` for dynamic content | ~5kb | Always | Core bundle |
 | **Vue 3 Import Map** - Use Vue in your own ES modules | ~162kb | Opt-in | AdminExtension |
-| **Modal Dialog** - Bootstrap modal via `simpler.modal` | ~24kb | Opt-in | Requires import map |
+| **Modal Dialog** - Bootstrap modal via `simpler.modal` | ~42kb | Opt-in | Requires import map |
 | **GridField Modals** - Toolbar/row buttons with modal forms | - | Opt-in | PHP only, uses Modal Dialog |
 | **GridField Toggle** - Row buttons to cycle field values | - | Opt-in | PHP only, no dependencies |
 
 **Total sizes:**
 - DOM events only: ~5kb (always loaded)
 - Import map with Vue only: ~5kb + 162kb = **~167kb** (for your own Vue components)
-- Modal via PHP: ~5kb + 162kb + 24kb = **~191kb** (import map auto-injected)
+- Modal via PHP: ~5kb + 162kb + 42kb = **~209kb** (import map auto-injected)
 - Modal via JS config: same, but requires AdminExtension in config
 
 ## 1. DOM events (always loaded)
@@ -162,6 +193,12 @@ createApp({
 ## 3. Modal dialog (Vue 3 + Bootstrap modal, opt-in)
 
 ![Modal in action](docs/modal-screenshot.png)
+
+**Silverstripe 5 and 6.** The CMS ships Bootstrap 4 CSS on Silverstripe 5 and Bootstrap 5 CSS on
+Silverstripe 6. `simpler-modal.js` bundles both modal implementations and picks the one matching
+the page's CSS at runtime, so the same code works on either. To close the modal from HTML you put in
+`bodyHtml`, use `data-simpler-dismiss` (Bootstrap's own `data-dismiss="modal"` and
+`data-bs-dismiss="modal"` are honoured on both majors too).
 
 > **Note:** The Vue import map is automatically injected when using SimplerModalField/Action PHP classes.  
 > Manual setup only needed if using `simpler.modal` directly from JavaScript.
@@ -415,6 +452,14 @@ class MyDetailButton extends GridFieldModalButton
 $config->addComponent(new MyDetailButton());
 ```
 
+Options (all fluent): `setColumnName()` (default `ModalAction`), `setButtonClasses()` (default
+`btn btn-sm btn-outline-info`), `setModalSize()` (`sm`/`lg`/`xl` or a CSS width), `setShowCloseButton()`
+(default `true`) and `setCloseButtonText()` (default `Sluiten`).
+
+The button is rendered inside `<span class="action">`: the `.action` ancestor keeps a click from
+opening the row's record, while the button itself must not carry `action`, because silverstripe/admin
+turns every `.grid-field .action` button into an AJAX GridField reload (#5, changed in 1.0.0).
+
 ### GridFieldToggleFieldButton (row toggle buttons)
 
 For per-row buttons that cycle a field through values (boolean or multi-state):
@@ -477,7 +522,9 @@ use Restruct\Silverstripe\Simpler\Session;
 $value = Session::get('key');
 Session::set('key', 'value');
 Session::clear('key');
-Session::clearAll();
+Session::clear_all();
+Session::add_to_array('key', 'value');
+$all = Session::get_all();
 ```
 
 ## 7. HeadRequirements (import maps, early scripts)
@@ -502,6 +549,13 @@ HeadRequirements::custom_script('window.CONFIG = { debug: true }', 'my-config');
 Also available as template globals: `$HeadReq_importMap()`, `$HeadReq_js()`, `$HeadReq_customScript()`.
 
 ## 8. Configuration summary
+
+| Config | Set on | Default | Effect |
+|--------|--------|---------|--------|
+| `extensions: [AdminExtension]` | `SilverStripe\Admin\LeftAndMain` | not applied | Vue 3 import map in the CMS `<head>` (dev or prod build by environment) |
+| `simpler_include_modal` | `SilverStripe\Admin\LeftAndMain` | `false` | With AdminExtension applied: also load `simpler-modal.js` on every CMS page |
+| `skip_import_map_check` | `Restruct\Silverstripe\Simpler\AdminExtension` | `false` | Silence the warning Vue-based fields raise when the import map was not set up on page load |
+| `extra_requirements_javascript` / `_css` | `SilverStripe\Admin\LeftAndMain` | set by this module | Core bundle and stylesheet, always loaded in the CMS |
 
 ```yaml
 # Default (auto-applied by module):
@@ -551,28 +605,23 @@ Then run `composer dump-autoload`. This is required because composer doesn't aut
 
 ### Building assets
 
-### Local git checkout
-
-When developing this module locally (checked out as git repo instead of installed via composer), you need to add the autoload path to your project's `composer.json`:
-
-```json
-"autoload": {
-    "psr-4": {
-        "Restruct\\Silverstripe\\Simpler\\": "_git_simpler/src/"
-    }
-}
-```
-
-Then run `composer dump-autoload`. This is required because composer doesn't automatically discover classes in local module directories - it only knows about paths defined in its autoload config.
-
-### Building assets
-
 ```bash
 cd silverstripe-simpler
 yarn install
 yarn run dev        # Watch mode
 yarn run production # Production build
+yarn test           # Modal smoke test (jsdom) against the Bootstrap 4 and 5 paths
 ```
+
+`client/dist` is committed; CI rebuilds it and fails if it differs from what `client/src` produces.
+
+### Tests
+
+The PHP tests need a Silverstripe host project (they cannot run from the module directory alone).
+Require the module there through a Composer **path repository with `"symlink": true`** - `/tests` is
+`export-ignore`, so a dist install has no tests - plus `silverstripe/recipe-testing` and, for the modal
+field tests, `lekoala/silverstripe-pure-modal`. `.github/workflows/ci.yml` builds exactly such a host
+for each supported Silverstripe major and is the reference setup.
 
 ## Known Issues
 
@@ -586,6 +635,4 @@ See [docs/ENTWINE_VUE_CONFLICT.md](docs/ENTWINE_VUE_CONFLICT.md) for details, al
 
 ## Version notes
 
-- **Branch ss5**: SilverStripe 5 (Vue 3)
-- **Tag 0.1.9**: SilverStripe 5 (Vue 2, legacy)
-- **main**: SilverStripe 6
+See [Version compatibility](#version-compatibility) above.
