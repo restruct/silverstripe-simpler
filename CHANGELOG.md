@@ -14,7 +14,7 @@ Upgrade guide: [UPGRADING.md](UPGRADING.md).
   and Bootstrap 5 CSS on Silverstripe 6, and the modal JS has to match. `simpler-modal.js` now bundles
   the Bootstrap 4 jQuery plugin (exactly as in `0.3.x`) and the Bootstrap 5 modal, and picks one at
   runtime from the page's CSS. On Silverstripe 5, `$.fn.modal` is the Bootstrap 4 plugin as before.
-  The bundle grew from ~17kb to ~42kb.
+  The bundle grew from ~22kb to ~42kb (compared with `0.3.7`).
 - **Dismissing the modal** goes through a `data-simpler-dismiss` attribute, and Bootstrap's own
   `data-dismiss="modal"` / `data-bs-dismiss="modal"` are honoured on both majors. Before, HTML written
   for one major did not close the modal on the other (the GridField toolbar form's cancel button used
