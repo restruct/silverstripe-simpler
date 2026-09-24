@@ -141,4 +141,27 @@ class SimplerModalActionTest extends SapphireTest
         $this->assertSame($action->getModalConfig(), json_decode($button->getAttribute('data-simpler-modal'), true));
         $this->assertSame('Translate', trim($button->textContent));
     }
+
+    /**
+     * The button title is escaped, not output raw: a title can come from record data
+     * (e.g. "Translate {$record->Title}"), and a raw one is an XSS path into the CMS.
+     */
+    public function testButtonTitleIsEscaped(): void
+    {
+        $title = 'Go <script>alert(1)</script> & <b>bold</b>';
+        $action = $this->actionInForm(SimplerModalAction::create('translate', $title));
+
+        $html = (string) $action->Field();
+
+        # No live markup from the title reaches the output
+        $this->assertStringNotContainsString('<script>', $html);
+        $this->assertStringNotContainsString('<b>', $html);
+        # It is there, escaped, as the button's text
+        $this->assertStringContainsString('Go &lt;script&gt;alert(1)&lt;/script&gt; &amp; &lt;b&gt;bold&lt;/b&gt;', $html);
+
+        $doc = new DOMDocument();
+        $doc->loadHTML('<?xml encoding="utf-8"?><body>' . $html . '</body>', LIBXML_NOERROR | LIBXML_NOWARNING);
+        $this->assertSame(0, $doc->getElementsByTagName('script')->length);
+        $this->assertSame($title, trim($doc->getElementsByTagName('button')->item(0)->textContent));
+    }
 }

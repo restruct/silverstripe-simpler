@@ -45,6 +45,10 @@ then shortcodable.
 
 ### Fixed
 
+- **Security: `SimplerModalAction` output its button title unescaped** (`$ButtonTitle.RAW`). A title
+  built from record data (e.g. `'Translate ' . $record->Title`) could inject markup or script into
+  the CMS. The title is now escaped (`$ButtonTitle.XML`). Titles that contained HTML on purpose now
+  show it as text; see [UPGRADING.md](UPGRADING.md).
 - **`GridFieldModalButton` reloaded the whole GridField on every click** (#5). silverstripe/admin binds
   `.grid-field .action:button` to an AJAX GridField reload, and the default button classes included
   `action`, so each click reloaded the grid before the modal opened.
@@ -61,7 +65,7 @@ then shortcodable.
 
 ### Tests and CI
 
-- Behavioural PHPUnit tests (84 tests) run on Silverstripe 5 (PHPUnit 9) and 6 (PHPUnit 11): a real CMS
+- Behavioural PHPUnit tests (85 tests) run on Silverstripe 5 (PHPUnit 9) and 6 (PHPUnit 11): a real CMS
   request proves the import map, the core bundle and the opt-in modal load; the modal field/action
   config and rendered buttons; the GridField components against real records; HeadRequirements and
   the Session helpers.

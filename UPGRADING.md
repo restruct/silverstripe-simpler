@@ -37,6 +37,21 @@ has its own major per Silverstripe major: `^1.2` on Silverstripe 5, `^2` on Silv
    spellings (`mr-2 me-2`, `rounded-right rounded-end`); `EditProtectedTextField` still wraps its
    buttons in `input-group-append`, which Bootstrap 5 no longer styles.
 
+4. **`SimplerModalAction` button titles are escaped.** 0.3.x output the title raw
+   (`$ButtonTitle.RAW`), so HTML in a title rendered as markup; 1.0 escapes it (`$ButtonTitle.XML`),
+   because a title built from record data was an XSS path into the CMS. A title that relied on HTML
+   (an icon `<i class="...">`, `<b>`, `<br>`) now shows the tags as text. Put an icon on the button
+   with `setButtonIcon('name', 'ss'|'bs'|false)` instead, and keep the title plain text. To find
+   candidates:
+
+   ```bash
+   grep -rn "SimplerModalAction::create(.*<" app/ src/ --include='*.php'
+   ```
+
+   If a project really needs HTML there, override the template
+   `Restruct/Silverstripe/Simpler/SimplerModalAction.ss` in the theme, and make sure no part of that
+   title comes from user or record data.
+
 ### Things that did NOT change
 
 - All PHP class names, namespaces, public methods and config keys.
