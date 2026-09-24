@@ -33,6 +33,9 @@ then shortcodable.
 - Bootstrap-version-specific utility classes are emitted in both spellings where the module renders
   them: `mr-2 me-2` (GridFieldToolbarModalAction cancel button), `rounded-right rounded-end`
   (EditProtectedTextField).
+- **Yarn only:** `package-lock.json` is removed; `yarn.lock` is the one lockfile (CI and the README
+  already build with yarn). Rebuild the client bundles with `yarn install --frozen-lockfile` and
+  `yarn production`.
 - `SimplerModalField::setButtonIcon(?string $buttonIcon = null, ...)`: explicit nullable type (the
   implicit form is deprecated in PHP 8.4). Same accepted values.
 
