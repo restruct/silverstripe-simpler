@@ -445,6 +445,9 @@ class GridFieldToolbarModalAction implements GridField_HTMLProvider, GridField_A
 
         // Container with data attributes for JS AJAX handler
         // Uses btn-toolbar for proper button alignment (matches SilverStripe Form styling)
+        // Spacing class for both Bootstrap majors: mr-2 (BS4, SS5 admin) and me-2 (BS5, SS6 admin);
+        // each CSS ignores the other's. data-dismiss="modal" is also caught by simpler-modal.js's own
+        // dismiss listener, so the cancel button closes the modal on SS6 too.
         $html = <<<HTML
 <div class="simpler-modal-gridfield-form"
      data-gridfield-url="{$gridFieldUrl}"
@@ -454,7 +457,7 @@ class GridFieldToolbarModalAction implements GridField_HTMLProvider, GridField_A
         {$fieldsHtml}
     </div>
     <div class="btn-toolbar mt-3 justify-content-end" role="toolbar">
-        <button type="button" class="btn btn-outline-secondary mr-2" data-dismiss="modal">Annuleren</button>
+        <button type="button" class="btn btn-outline-secondary mr-2 me-2" data-dismiss="modal">Annuleren</button>
         <button type="button" class="btn btn-primary font-icon-tick simpler-modal-ajax-submit">
             {$submitLabel}
         </button>

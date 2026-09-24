@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "bootstrap": "^5.3",
+    "bootstrap4": "npm:bootstrap@^4.6.2",
     "@popperjs/core": "^2.11",
     "vue": "^3.4"
   },
