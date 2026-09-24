@@ -2,14 +2,14 @@
 
 **Package:** `restruct/silverstripe-simpler`
 **Namespace:** `Restruct\Silverstripe\Simpler`
-**Branch:** `ss5` (SilverStripe 5 compatible)
+**Branch:** `main` (Silverstripe 5 and 6, `1.x`). Older lines: see Version Notes.
 
 ## Purpose
 
 Makes SilverStripe Admin development simpler by re-introducing traditional basics:
 
 1. **Synthetic DOM Events** (always loaded) - `DOMNodesInserted`/`DOMNodesRemoved` for JS initialization on dynamic content
-2. **Modal Dialog** (opt-in) - Bootstrap 4 modal via global `simpler.modal` object
+2. **Modal Dialog** (opt-in) - Bootstrap modal via global `simpler.modal` object; bundles Bootstrap 4 (SS5 admin CSS) and Bootstrap 5 (SS6 admin CSS) and picks one at runtime
 3. **Vue 3 Import Map** (opt-in) - Use Vue 3 in your own ES modules
 4. **Static Session Helpers** - `Session::get()`/`set()` instead of `$this->getRequest()->getSession()->get()`
 5. **HeadRequirements** - Import maps and early scripts in `<head>` (also template globals)
@@ -37,12 +37,12 @@ a-simpler/
 ├── client/
 │   ├── src/js/
 │   │   ├── simpler-silverstripe.js # Core: DOM events, jQuery $, window.simpler
-│   │   └── simpler-modal.js        # Opt-in: BS4 modal + Vue 3 modal app
+│   │   └── simpler-modal.js        # Opt-in: BS4 + BS5 modal (picked at runtime) + Vue 3 modal app
 │   ├── src/styles/
 │   │   └── simpler-silverstripe.scss
 │   └── dist/js/
 │       ├── simpler-silverstripe.js     # Core bundle (~5kb)
-│       ├── simpler-modal.js            # Modal bundle (~192kb, includes Vue 3)
+│       ├── simpler-modal.js            # Modal bundle (~42kb, BS4 + BS5 modal; Vue 3 via import map)
 │       ├── vue.esm-browser.js          # Vue 3 dev (~530kb, for import map)
 │       └── vue.esm-browser.prod.js     # Vue 3 prod (~162kb, for import map)
 ├── webpack.mix.js
@@ -56,9 +56,11 @@ a-simpler/
 | `simpler-silverstripe.js` | ~5kb | DOM events, React mounts, jQuery `$`, `window.simpler` | Always |
 | `vue.esm-browser.prod.js` | ~162kb | Vue 3 for import map (prod) | Via AdminExtension |
 | `vue.esm-browser.js` | ~530kb | Vue 3 for import map (dev) | Via AdminExtension |
-| `simpler-modal.js` | ~17kb | BS4 modal plugin + Vue modal app | Opt-in (requires AdminExtension) |
+| `simpler-modal.js` | ~42kb | BS4 jQuery modal plugin + BS5 modal (one picked at runtime) + Vue modal app | Opt-in (requires AdminExtension) |
 
 **Note:** `simpler-modal.js` uses Vue via import map - AdminExtension must be enabled for modal to work.
+It also requires jQuery as a global (the Bootstrap 4 plugin is imported at the top level and throws without it); both admins ship jQuery.
+`client/dist` is committed and CI rebuilds it and fails on a diff: rebuild with `yarn install --frozen-lockfile && yarn production` (yarn only; there is no package-lock.json).
 
 ## Configuration
 
@@ -274,6 +276,8 @@ SimplerModalAction::create('translate', 'Translate')
     ->setDialogButtonTitle('Translate');
 ```
 
+Button titles are escaped (`$ButtonTitle.XML` / `$Title.XML`): plain text only, use `setButtonIcon()` for icons.
+
 Data attribute pattern - button renders with JSON config:
 ```html
 <button data-simpler-modal='{"title":"Preview","bodyHtml":"..."}'>Preview</button>
@@ -480,7 +484,7 @@ use Restruct\Silverstripe\Simpler\Session;
 $value = Session::get('key');
 Session::set('key', 'value');
 Session::clear('key');
-Session::clearAll();
+Session::clear_all();
 ```
 
 ### 6. HeadRequirements (import maps, early scripts)
@@ -509,8 +513,8 @@ Also available as template globals: `$HeadReq_importMap()`, `$HeadReq_js()`, `$H
 - **MutationObserver** watches document for DOM changes, batched at 100ms
 - **React Form wrapper** via `Injector.transform()` emits mount/unmount events
 - **jQuery** is framework-provided (external), aliased to `$`
-- **Bootstrap 4 modal** jQuery plugin bundled in simpler-modal.js
-- **Vue 3** bundled with template compiler in simpler-modal.js
+- **Bootstrap modal**: simpler-modal.js bundles the Bootstrap 4 jQuery plugin (npm alias `bootstrap4`) AND the Bootstrap 5 modal, and picks one at runtime from the page's CSS (`--bs-blue` on :root = Bootstrap 5, i.e. SS6 admin; otherwise Bootstrap 4, i.e. SS5 admin)
+- **Vue 3** is NOT bundled in simpler-modal.js: it is a webpack external resolved through the import map (template compiler build)
 - **Import map** auto-switches between dev/prod Vue based on `Director::isDev()`
 
 ## Known Issues
@@ -525,6 +529,4 @@ See [docs/ENTWINE_VUE_CONFLICT.md](docs/ENTWINE_VUE_CONFLICT.md) for full detail
 
 ## Version Notes
 
-- **Branch ss5**: SilverStripe 5 compatible (Vue 3)
-- **Tag 0.1.9**: SilverStripe 5 compatible (Vue 2, legacy)
-- **main branch**: SilverStripe 6
+Branches, module versions and supported Silverstripe/PHP versions: see the "Version compatibility" table in [README.md](README.md). Upgrade notes: [UPGRADING.md](UPGRADING.md).
