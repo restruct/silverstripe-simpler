@@ -29,6 +29,7 @@ class SpBAdmin extends ModelAdmin
         'toggle' => ['dataClass' => SpBToggleRecord::class, 'title' => 'Toggle buttons'],
         'modal' => ['dataClass' => SpBModalRecord::class, 'title' => 'Modal buttons'],
         'toolbar' => ['dataClass' => SpBToolbarRecord::class, 'title' => 'Toolbar modal'],
+        'puremodal' => ['dataClass' => SpBPureModalRecord::class, 'title' => 'PureModal classes'],
     ];
 
     protected function getGridFieldConfig(): \SilverStripe\Forms\GridField\GridFieldConfig

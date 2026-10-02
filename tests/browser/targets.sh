@@ -19,3 +19,9 @@ SS6_RECIPE="^6"
 SS6_PHP="8.3"
 SS6_PORT="8902"
 SS6_SRC_REF=""
+
+# SimplerModalField / SimplerModalAction extend lekoala/silverstripe-pure-modal, which the module only
+# suggests (README section 4), and SimplerModalAction posts through lekoala/silverstripe-cms-actions
+# (doCustomAction), which pure-modal only suggests. The fixture's "puremodal" tab needs both.
+SS5_EXTRA_REQUIRE="lekoala/silverstripe-pure-modal:^1.2 lekoala/silverstripe-cms-actions:^1.7"
+SS6_EXTRA_REQUIRE="lekoala/silverstripe-pure-modal:^2 lekoala/silverstripe-cms-actions:^2"

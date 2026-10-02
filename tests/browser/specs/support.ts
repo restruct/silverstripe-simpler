@@ -7,7 +7,7 @@ import { test as base, expect, type Locator, type Page, type Request } from '@pl
 // dev/build (fixtures/SpB*Record.php). AdminExtension is applied to that admin only.
 
 /** The ModelAdmin tabs (managed_models keys), see fixtures/SpBAdmin.php. */
-export type Tab = 'toggle' | 'modal' | 'toolbar';
+export type Tab = 'toggle' | 'modal' | 'toolbar' | 'puremodal';
 
 /**
  * test, extended with an automatic console guard: every spec fails if the page logs a console
