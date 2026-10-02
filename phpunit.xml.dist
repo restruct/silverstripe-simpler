@@ -24,6 +24,8 @@
     <testsuites>
         <testsuite name="simpler">
             <directory>vendor/restruct/silverstripe-simpler/tests</directory>
+            <!-- Playwright browser tests and their fixtures: not PHPUnit, run by tools/browser/run.sh -->
+            <exclude>vendor/restruct/silverstripe-simpler/tests/browser</exclude>
         </testsuite>
     </testsuites>
 </phpunit>

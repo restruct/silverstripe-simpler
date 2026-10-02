@@ -124,6 +124,7 @@ jobs:
               <testsuites>
                   <testsuite name="simpler">
                       <directory>vendor/restruct/silverstripe-simpler/tests</directory>
+                      <exclude>vendor/restruct/silverstripe-simpler/tests/browser</exclude>
                   </testsuite>
                   <testsuite name="consumer">
                       <directory>app/tests</directory>
