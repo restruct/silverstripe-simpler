@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.1 (unreleased)
+
+### Fixed
+
+- **`GridFieldToggleFieldButton::setConfirmMessage()` never asked for confirmation** (#14). The message
+  only reached a `data-confirm` attribute that nothing read, so every toggle with a confirm message
+  (including `GridFieldToggleIsActiveButton`'s default "Are you sure?") ran straight away. The core
+  bundle now asks with `confirm()` and stops the click when it is declined, for the plain column
+  button and for the item in the row's action menu.
+
 ## 1.0.0 (2026-09-25)
 
 **One release line for Silverstripe 5 and 6.** Until now the Silverstripe 5 work lived on the `ss5`

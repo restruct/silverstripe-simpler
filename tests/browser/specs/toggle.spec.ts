@@ -36,7 +36,7 @@ async function clickToggle(page: Page, row: Locator, label: string): Promise<voi
 }
 
 test('the IsActive toggle flips the value through an AJAX POST and re-renders the row', async ({ page }) => {
-    // Any dialog is accepted here; whether one should appear is the fixme spec below.
+    // Any dialog is accepted here; that the confirm appears is checked by the #14 specs below.
     page.on('dialog', (d) => d.accept());
     const grid = await openTab(page, 'toggle');
     const row = rowTitled(grid, 'Toggle active');
@@ -85,7 +85,7 @@ test('a multi-state toggle cycles through its states in order and back to the st
     await expect(row.locator('td.col-IsActive-Nice')).toHaveText(/^(Yes|No)$/);
 });
 
-test.fixme('the IsActive toggle asks "Are you sure?" and does nothing when declined (#14)', async ({ page }) => {
+test('the IsActive toggle asks "Are you sure?" and does nothing when declined (#14)', async ({ page }) => {
     // https://github.com/restruct/silverstripe-simpler/issues/14 - setConfirmMessage() only sets a
     // data-confirm attribute that nothing reads, so the toggle posts without a dialog.
     const grid = await openTab(page, 'toggle');
@@ -112,4 +112,25 @@ test.fixme('the IsActive toggle asks "Are you sure?" and does nothing when decli
     await page.waitForTimeout(500);
     expect(posts, 'no toggle POST after declining').toEqual([]);
     await expect(row.locator('td.col-IsActive-Nice')).toHaveText(before);
+});
+
+test('the IsActive toggle posts once its "Are you sure?" is accepted (#14)', async ({ page }) => {
+    // The other half of #14: the confirm handler must hand an accepted click on to the admin's
+    // GridField action, so the toggle still posts through AJAX and the row re-renders.
+    const grid = await openTab(page, 'toggle');
+    const row = rowTitled(grid, 'Toggle confirm');
+    const before = await cell(row, 'IsActive-Nice');
+    const label = before === 'Yes' ? 'Deactivate' : 'Activate';
+
+    const messages: string[] = [];
+    page.on('dialog', (d) => {
+        messages.push(d.message());
+        void d.accept();
+    });
+    const navigations = watchDocumentNavigations(page);
+    await clickToggle(page, row, label);
+
+    expect(messages, 'exactly one confirm, with the configured message').toEqual(['Are you sure?']);
+    await expect(row.locator('td.col-IsActive-Nice')).toHaveText(before === 'Yes' ? 'No' : 'Yes');
+    expect(navigations(), 'document navigations after the toggle').toEqual([]);
 });
