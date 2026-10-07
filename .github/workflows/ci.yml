@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    name: SS${{ matrix.silverstripe }} / PHP ${{ matrix.php }}
+    name: SS${{ matrix.silverstripe }} / PHP ${{ matrix.php }}${{ matrix.puremodal == '' && ' / no pure-modal' || '' }}
     runs-on: ubuntu-latest
 
     strategy:
@@ -18,8 +18,8 @@ jobs:
           # One job per supported Silverstripe major, at the oldest and newest PHP that major is
           # used with here. The module's composer.json is the source of truth for the supported
           # range; this matrix must follow it. Silverstripe 4 is not supported and not tested.
-          # lekoala/silverstripe-pure-modal is only a composer "suggest", but it is installed on
-          # every leg so SimplerModalField/Action are tested and the test count is equal per major.
+          # lekoala/silverstripe-pure-modal is only a composer "suggest", but it is installed on all but
+          # the last two legs so SimplerModalField/Action are tested and the test count is equal per major.
           - silverstripe: '5'
             php: '8.1'
             recipe: '^5'
@@ -40,6 +40,20 @@ jobs:
             recipe: '^6'
             testing: '^4'
             puremodal: '^2'
+          # One leg per major WITHOUT pure-modal (puremodal empty), as most installs run: the
+          # GridField modal components must not depend on it (#13: GridFieldToolbarModalAction
+          # fataled without it, and the legs above could not see that). The pure-modal tests skip
+          # here, so the test count is lower than on the other legs by design.
+          - silverstripe: '5'
+            php: '8.3'
+            recipe: '^5'
+            testing: '^3'
+            puremodal: ''
+          - silverstripe: '6'
+            php: '8.3'
+            recipe: '^6'
+            testing: '^4'
+            puremodal: ''
 
     services:
       database:
@@ -83,7 +97,6 @@ jobs:
             "require": {
               "silverstripe/recipe-cms": "${{ matrix.recipe }}",
               "silverstripe/recipe-testing": "${{ matrix.testing }}",
-              "lekoala/silverstripe-pure-modal": "${{ matrix.puremodal }}",
               "restruct/silverstripe-simpler": "*"
             },
             "repositories": [
@@ -106,6 +119,10 @@ jobs:
           # Blocking is disabled HERE ONLY, in a throwaway CI host project, and only on SS5 legs.
           if [ "${{ matrix.silverstripe }}" = "5" ]; then
             composer config policy.advisories.block false
+          fi
+          # pure-modal is a suggest: required only on the legs that name a constraint for it.
+          if [ -n "${{ matrix.puremodal }}" ]; then
+            composer require --no-update "lekoala/silverstripe-pure-modal:${{ matrix.puremodal }}"
           fi
           composer update --no-interaction --no-progress
 
