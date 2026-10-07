@@ -139,11 +139,16 @@ const adapters = {
     },
 };
 
-document.addEventListener('DOMContentLoaded', () => {
+// Builds the modal. Runs on DOMContentLoaded, or at once when the module arrives after that: when
+// the CMS screen was reached through CMS navigation, simpler-modal-loader.js imports this module
+// long after the page has loaded, and a DOMContentLoaded listener would never fire (#15).
+// Was: document.addEventListener('DOMContentLoaded', () => {
+function initModal() {
     // Module scripts run after the stylesheets in <head> have loaded, so the CSS check is reliable here
     ui.bs5 = bootstrapIsV5();
     if (!ui.bs5) {
         // Runs after Bootstrap 5's own DOMContentLoaded registration, since that listener was added first
+        // (imported after page load, Bootstrap 5 registers at once during its import, earlier still)
         restoreBootstrap4Plugin();
     }
     const adapter = ui.bs5 ? adapters.bs5 : adapters.bs4;
@@ -407,7 +412,13 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('GridField AJAX submit error:', error);
         });
     });
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initModal);
+} else {
+    initModal();
+}
 
 /**
  * Progress indicator for long-running operations

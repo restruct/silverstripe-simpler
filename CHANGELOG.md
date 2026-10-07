@@ -22,6 +22,14 @@
   indicator started 50 ms after the request was sent, so a response within those 50 ms was lost: the
   modal never closed and the GridField never reloaded (the action itself had run). The indicator now
   starts before the request; only attaching the progress bar waits for the modal body to render.
+- **The modal did not work when the CMS screen was reached through CMS navigation** (#15). The modal
+  module arrived through the AJAX response's `X-Include-JS` header, which the admin evaluates as a
+  classic script ("Cannot use import statement outside a module"), and it only built itself on
+  `DOMContentLoaded`, long gone by then. During an AJAX request `AdminExtension::requireModal()` now
+  adds `simpler-modal-loader.js`, a classic script that `import()`s the module, and the module builds
+  itself at once when the page has already loaded. Full page loads are unchanged. Projects that load
+  the module with their own `Requirements::javascript(..., ['type' => 'module'])` should call
+  `AdminExtension::requireModal()` instead (README section 3).
 
 ## 1.0.0 (2026-09-25)
 

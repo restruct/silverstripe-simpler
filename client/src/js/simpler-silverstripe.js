@@ -28,7 +28,24 @@ import Injector from 'lib/Injector';
 window.simpler = {
     // Spinner HTML template (sr-only for Bootstrap 4)
     spinner: '<div class="text-center p-3"><div class="spinner-border" role="status"><span class="sr-only">Loading...</span></div></div>',
+    // URL of the modal module, for simpler-modal-loader.js (see below)
+    modalUrl: null,
 };
+
+// Where simpler-modal.js is served from, worked out here because this bundle is always loaded as a
+// <script src> on the first, full CMS page load, so document.currentScript knows its URL. The
+// modal sits next to it in client/dist/js. simpler-modal-loader.js needs it: that loader arrives
+// through a CMS (pjax) navigation's X-Include-JS header, which the admin evaluates as inline code,
+// so it has no URL of its own to resolve from (#15). The ?m= cache buster of this bundle is reused;
+// both files ship (and are installed) together.
+(function () {
+    const ownSrc = document.currentScript && document.currentScript.src;
+    if (ownSrc) {
+        const url = new URL('simpler-modal.js', ownSrc);
+        url.search = new URL(ownSrc).search;
+        window.simpler.modalUrl = url.href;
+    }
+})();
 
 //
 // DOM Events Emulator - 'emulate' DOMContentLoaded events for ajax-inserted/react rendered content

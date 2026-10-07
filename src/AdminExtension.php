@@ -5,7 +5,9 @@ namespace Restruct\Silverstripe\Simpler;
 use SilverStripe\Admin\LeftAndMain;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Extension;
+use SilverStripe\Control\Controller;
 use SilverStripe\Control\Director;
+use SilverStripe\Control\HTTPRequest;
 use SilverStripe\View\Requirements;
 
 /**
@@ -84,9 +86,39 @@ class AdminExtension extends Extension
     /**
      * Include the modal JS file.
      * Can be called statically from anywhere.
+     *
+     * On a full page load this is the module itself (<script type="module">). In an AJAX response
+     * (a CMS navigation: menu, tab or breadcrumb click) it is simpler-modal-loader.js instead: the
+     * admin loads an AJAX response's scripts from its X-Include-JS header as CLASSIC scripts, where
+     * the module's import statements throw, so the modal never loaded until a full reload (#15).
+     * The loader is classic code that import()s the module, and does nothing when it is already on
+     * the page.
      */
     public static function requireModal(): void
     {
+        if (self::isAjaxRequest()) {
+            Requirements::javascript('restruct/silverstripe-simpler:client/dist/js/simpler-modal-loader.js');
+            return;
+        }
         Requirements::javascript('restruct/silverstripe-simpler:client/dist/js/simpler-modal.js', ['type' => 'module']);
+    }
+
+    /**
+     * Is the current request an AJAX one, whose requirements reach the browser through X-Include-JS?
+     * False without a current controller or request (CLI, unit tests): those get the full-page form.
+     */
+    protected static function isAjaxRequest(): bool
+    {
+        # Controller::has_curr() is gone on SS6 (curr() returns null there instead); on SS5 curr()
+        # raises a warning without a controller, so has_curr() is asked first where it exists.
+        if (method_exists(Controller::class, 'has_curr') && !Controller::has_curr()) {
+            return false;
+        }
+        $controller = Controller::curr();
+        if (!$controller) {
+            return false;
+        }
+        $request = $controller->getRequest();
+        return $request instanceof HTTPRequest && $request->isAjax();
     }
 }
