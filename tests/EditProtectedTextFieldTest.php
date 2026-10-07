@@ -43,6 +43,21 @@ class EditProtectedTextFieldTest extends SapphireTest
         $this->assertContains(json_decode($m[1]), ['', null]);
     }
 
+    /**
+     * #16: a null value (an empty Varchar is stored as NULL) rendered `const originalValue = ;` on
+     * Silverstripe 6, a module that does not parse. The literal must be valid JSON on every major;
+     * json_decode('') is null, which the test above accepts, so this one decodes strictly.
+     */
+    public function testNullValueRendersValidJsonLiteral(): void
+    {
+        $html = (string) EditProtectedTextField::create('Code', 'Code')->setValue(null)->Field();
+
+        preg_match('#const originalValue = (.*);#', $html, $m);
+        $this->assertNotEmpty($m, 'originalValue not found in: ' . $html);
+        $this->assertNotSame('', trim($m[1]), 'originalValue has no literal at all');
+        $this->assertSame('', json_decode($m[1], false, 512, JSON_THROW_ON_ERROR));
+    }
+
     public function testDisabledFieldRendersDisabledInput(): void
     {
         $html = (string) EditProtectedTextField::create('Code', 'Code', 'x')->setDisabled(true)->Field();

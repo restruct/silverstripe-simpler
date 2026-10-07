@@ -13,6 +13,11 @@
   its requirements through `SimplerModalField`, which only exists when pure-modal (a suggest) is
   installed, so any GridField carrying a toolbar action returned a 500 ("Class SimplerModalField not
   found"). It now calls `AdminExtension` directly, like `GridFieldModalButton`.
+- **`EditProtectedTextField` broke on Silverstripe 6 when the value was empty (null)** (#16). The template
+  wrote the value as `$Value.JSON.RAW`, which renders nothing for null on Silverstripe 6, so the inline
+  module (`const originalValue = ;`) did not parse and the field showed raw Vue attributes. The value
+  now comes from `EditProtectedTextField::getValueJSON()`, always a JSON string (null becomes `""`,
+  which on Silverstripe 5 used to render as `null`).
 
 ## 1.0.0 (2026-09-25)
 

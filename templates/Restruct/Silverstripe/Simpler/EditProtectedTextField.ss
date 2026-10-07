@@ -40,7 +40,9 @@
   if (el && !el.__vue_app__) {
     createApp({
       setup() {
-        const originalValue = $Value.JSON.RAW;
+        // ValueJSON (EditProtectedTextField::getValueJSON()) instead of Value.JSON: on SS6 a
+        // null value rendered as nothing there, which broke this module (#16).
+        const originalValue = $ValueJSON.RAW;
         const currentValue = ref(originalValue);
         const editing = ref(false);
         const input = ref(null);

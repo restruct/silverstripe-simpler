@@ -51,10 +51,10 @@ test('starts read-only, unlocks with the edit button, and Revert restores the va
     await expect(edit).toBeVisible();
 });
 
-test('an empty value shows a dash placeholder and muted text (#16 on SS6)', async ({ page }, testInfo) => {
-    // https://github.com/restruct/silverstripe-simpler/issues/16 - on SS6 a null value renders as
-    // "const originalValue = ;" in the inline module, which does not parse, so Vue never mounts.
-    test.fixme(testInfo.project.name === 'ss6', 'https://github.com/restruct/silverstripe-simpler/issues/16');
+test('an empty value shows a dash placeholder and muted text (#16 on SS6)', async ({ page }) => {
+    // https://github.com/restruct/silverstripe-simpler/issues/16 - on SS6 a null value rendered as
+    // "const originalValue = ;" in the inline module, which does not parse, so Vue never mounted
+    // (the console guard catches the parse error as well).
     await openRecord(page, 'Modal empty');
     const { input } = parts(page);
     await expect(input).toHaveValue('');
