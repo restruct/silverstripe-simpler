@@ -97,12 +97,17 @@ test.fixme('the IsActive toggle asks "Are you sure?" and does nothing when decli
     page.on('request', (r) => {
         if (r.method() === 'POST' && r.url().includes('/field/toggle')) posts.push(r.url());
     });
-    const dialog = page.waitForEvent('dialog', { timeout: 3_000 });
+    // The dialog is answered from a handler registered BEFORE the click: a dialog blocks the click
+    // that opened it until it is handled, so awaiting the click first and the dialog after it never
+    // returns (Playwright "Dialogs"); that is how this spec stood while it was fixme.
+    const messages: string[] = [];
+    page.on('dialog', (d) => {
+        messages.push(d.message());
+        void d.dismiss();
+    });
     const items = await openActionMenu(row);
     await items.filter({ hasText: new RegExp(`^${label}$`) }).click();
-    const d = await dialog;
-    expect(d.message()).toBe('Are you sure?');
-    await d.dismiss();
+    expect(messages, 'one confirm, with the configured message').toEqual(['Are you sure?']);
 
     await page.waitForTimeout(500);
     expect(posts, 'no toggle POST after declining').toEqual([]);
