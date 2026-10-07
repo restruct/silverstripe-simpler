@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.0.2 (unreleased)
+
+### Fixed
+
+- **`SimplerModalAction` failed on Silverstripe 5 when the edit form had a dropdown without an empty
+  option** (#18). The modal posts only its own fields to the edit form's URL, so the edit form was
+  validated against data that lacked all of its fields: an `Enum` dropdown failed ("(none) is not a
+  valid option") and the record method never ran. A `RequiredFields` validator on the record failed the
+  same way on Silverstripe 5 and 6. The action now adds a hidden, validation-exempt stand-in button
+  (`SimplerModalExemptAction`, which renders nothing) to the edit form, so a submit from the modal skips
+  the edit form's validation. The record method gets the modal's data only and the edit form is not
+  saved, as before. Other `doCustomAction` buttons, and the regular save, are validated as before.
+
 ## 1.0.1 (2026-10-07)
 
 ### Fixed

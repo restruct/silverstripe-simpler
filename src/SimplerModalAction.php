@@ -181,6 +181,49 @@ class SimplerModalAction extends PureModalAction
     }
 
     /**
+     * Also gives the form a hidden, validation-exempt stand-in for the modal's submit button (#18).
+     *
+     * The modal posts only its own fields to the form's URL, so without the stand-in the form is
+     * validated against data that lacks all of its fields (see SimplerModalExemptAction).
+     *
+     * @param Form $form
+     * @return $this
+     */
+    public function setForm($form)
+    {
+        parent::setForm($form);
+        if ($form instanceof Form) {
+            $this->addExemptAction($form);
+        }
+        return $this;
+    }
+
+    /**
+     * Add this action's SimplerModalExemptAction to the root of the FieldList it sits in.
+     *
+     * Called from setForm(), which the Form constructor runs BEFORE it stores its fields and actions,
+     * so Form::Actions() is not available yet; the root FieldList is reached through the field
+     * itself. Appended at the end, so it never becomes the form's default action (the first
+     * FormAction of the actions; cms-actions has already arranged them by the time the form is built).
+     */
+    protected function addExemptAction(Form $form): void
+    {
+        $container = $this->getContainerFieldList();
+        if (!$container) {
+            return;
+        }
+        $root = $container->rootFieldList();
+        $exempt = SimplerModalExemptAction::create($this->actionName());
+        # setForm() runs again when the form is transformed (readonly) or its actions are re-set; keep
+        # one stand-in per modal action.
+        if ($root->dataFieldByName($exempt->getName())) {
+            return;
+        }
+        $root->push($exempt);
+        $exempt->setForm($form);
+    }
+
+    /**
      * Get button title for template (icon is handled via ButtonIconClass on the button element)
      */
     public function getButtonTitle(): string
