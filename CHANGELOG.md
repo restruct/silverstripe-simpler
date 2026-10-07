@@ -1,5 +1,36 @@
 # Changelog
 
+## 1.0.1 (2026-10-07)
+
+### Fixed
+
+- **`GridFieldToggleFieldButton::setConfirmMessage()` never asked for confirmation** (#14). The message
+  only reached a `data-confirm` attribute that nothing read, so every toggle with a confirm message
+  (including `GridFieldToggleIsActiveButton`'s default "Are you sure?") ran straight away. The core
+  bundle now asks with `confirm()` and stops the click when it is declined, for the plain column
+  button and for the item in the row's action menu.
+- **`GridFieldToolbarModalAction` fataled without `lekoala/silverstripe-pure-modal`** (#13). It loaded
+  its requirements through `SimplerModalField`, which only exists when pure-modal (a suggest) is
+  installed, so any GridField carrying a toolbar action returned a 500 ("Class SimplerModalField not
+  found"). It now calls `AdminExtension` directly, like `GridFieldModalButton`.
+- **`EditProtectedTextField` broke on Silverstripe 6 when the value was empty (null)** (#16). The template
+  wrote the value as `$Value.JSON.RAW`, which renders nothing for null on Silverstripe 6, so the inline
+  module (`const originalValue = ;`) did not parse and the field showed raw Vue attributes. The value
+  now comes from `EditProtectedTextField::getValueJSON()`, always a JSON string (null becomes `""`,
+  which on Silverstripe 5 used to render as `null`).
+- **The GridField toolbar form modal stayed on "Processing..." after a fast response** (#17). The progress
+  indicator started 50 ms after the request was sent, so a response within those 50 ms was lost: the
+  modal never closed and the GridField never reloaded (the action itself had run). The indicator now
+  starts before the request; only attaching the progress bar waits for the modal body to render.
+- **The modal did not work when the CMS screen was reached through CMS navigation** (#15). The modal
+  module arrived through the AJAX response's `X-Include-JS` header, which the admin evaluates as a
+  classic script ("Cannot use import statement outside a module"), and it only built itself on
+  `DOMContentLoaded`, long gone by then. During an AJAX request `AdminExtension::requireModal()` now
+  adds `simpler-modal-loader.js`, a classic script that `import()`s the module, and the module builds
+  itself at once when the page has already loaded. Full page loads are unchanged. Projects that load
+  the module with their own `Requirements::javascript(..., ['type' => 'module'])` should call
+  `AdminExtension::requireModal()` instead (README section 3).
+
 ## 1.0.0 (2026-09-25)
 
 **One release line for Silverstripe 5 and 6.** Until now the Silverstripe 5 work lived on the `ss5`

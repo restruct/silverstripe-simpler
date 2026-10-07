@@ -22,3 +22,7 @@ mix.js('client/src/js/simpler-modal.js', 'js').webpackConfig({
     },
     experiments: { outputModule: true }
 });
+
+// Classic-script loader for the modal (#15): copied as-is, NOT bundled, so its dynamic import()
+// stays a native import() (webpack would replace it with its own chunk loading). See the file.
+mix.copy('client/src/js/simpler-modal-loader.js', 'client/dist/js/simpler-modal-loader.js');

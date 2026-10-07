@@ -101,7 +101,7 @@ test.describe('GridFieldModalButton', () => {
         await expect(page.locator('body')).toHaveClass(/modal-open/);
     });
 
-    test.fixme('opens after the tab was reached through CMS navigation (#15)', async ({ page }) => {
+    test('opens after the tab was reached through CMS navigation (#15)', async ({ page }) => {
         // https://github.com/restruct/silverstripe-simpler/issues/15 - the modal script arrives
         // through X-Include-JS, which the admin evaluates as a classic script: the module throws
         // ("Cannot use import statement outside a module") and window.simpler.modal stays undefined.

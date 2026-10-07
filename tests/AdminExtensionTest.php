@@ -6,6 +6,9 @@ use ReflectionProperty;
 use Restruct\Silverstripe\Simpler\AdminExtension;
 use Restruct\Silverstripe\Simpler\HeadRequirements;
 use SilverStripe\Admin\LeftAndMain;
+use SilverStripe\Control\Controller;
+use SilverStripe\Control\HTTPRequest;
+use SilverStripe\Control\Session;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Core\Kernel;
@@ -103,6 +106,60 @@ class AdminExtensionTest extends FunctionalTest
             '#<script type="module"[^>]*src="[^"]*client/dist/js/simpler-modal\.js#',
             $body
         );
+    }
+
+    /**
+     * #15: a CMS navigation is an AJAX (pjax) request, whose scripts the admin loads from the
+     * X-Include-JS header as CLASSIC scripts, where the module's imports throw. During such a
+     * request requireModal() must add the classic loader, not the module itself.
+     */
+    public function testRequireModalAddsClassicLoaderDuringAjaxRequest(): void
+    {
+        $files = $this->requireModalDuring(true);
+
+        $loader = array_filter($files, fn ($file) => str_contains($file, 'client/dist/js/simpler-modal-loader.js'), ARRAY_FILTER_USE_KEY);
+        $module = array_filter($files, fn ($file) => str_contains($file, 'client/dist/js/simpler-modal.js'), ARRAY_FILTER_USE_KEY);
+        $this->assertCount(1, $loader, 'required: ' . implode(', ', array_keys($files)));
+        $this->assertSame([], $module, 'the module itself must not be required during an AJAX request');
+        // A classic script: no type="module"
+        $this->assertNotSame('module', reset($loader)['type'] ?? null);
+    }
+
+    /**
+     * The other half of #15: a full page request still gets the module as <script type="module">.
+     */
+    public function testRequireModalAddsModuleDuringFullPageRequest(): void
+    {
+        $files = $this->requireModalDuring(false);
+
+        $module = array_filter($files, fn ($file) => str_contains($file, 'client/dist/js/simpler-modal.js'), ARRAY_FILTER_USE_KEY);
+        $this->assertCount(1, $module, 'required: ' . implode(', ', array_keys($files)));
+        $this->assertSame('module', reset($module)['type'] ?? null);
+        $this->assertSame([], array_filter($files, fn ($file) => str_contains($file, 'simpler-modal-loader.js'), ARRAY_FILTER_USE_KEY));
+    }
+
+    /**
+     * Call requireModal() while a controller handles a (non-)AJAX request; returns the required JS.
+     *
+     * @return array<string,array<string,mixed>>
+     */
+    private function requireModalDuring(bool $ajax): array
+    {
+        $request = new HTTPRequest('GET', 'admin/security');
+        if ($ajax) {
+            $request->addHeader('X-Requested-With', 'XMLHttpRequest');
+        }
+        # pushCurrent() reads the request's session
+        $request->setSession(new Session([]));
+        $controller = Controller::create();
+        $controller->setRequest($request);
+        $controller->pushCurrent();
+        try {
+            AdminExtension::requireModal();
+        } finally {
+            $controller->popCurrent();
+        }
+        return Requirements::backend()->getJavascript();
     }
 
     public function testRequireImportMapUsesProductionVueOutsideDev(): void

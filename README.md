@@ -213,6 +213,14 @@ AdminExtension::requireImportMap();
 AdminExtension::requireModal();
 ```
 
+Use `requireModal()` rather than your own `Requirements::javascript(..., ['type' => 'module'])` for
+the modal: when the screen is reached through CMS navigation (menu, tab or breadcrumb, all AJAX), the
+admin loads the response's scripts as classic scripts, where a module fails ("Cannot use import
+statement outside a module"). In an AJAX request `requireModal()` therefore adds
+`simpler-modal-loader.js`, a classic script that imports the module (and does nothing when the modal is
+already on the page). The import map still has to be on the page from the first full load, which is
+what AdminExtension on LeftAndMain does.
+
 **Option B: Via YAML config** (always loaded in admin):
 ```yaml
 # app/_config/config.yml

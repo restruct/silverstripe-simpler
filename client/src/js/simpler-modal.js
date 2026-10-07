@@ -139,11 +139,16 @@ const adapters = {
     },
 };
 
-document.addEventListener('DOMContentLoaded', () => {
+// Builds the modal. Runs on DOMContentLoaded, or at once when the module arrives after that: when
+// the CMS screen was reached through CMS navigation, simpler-modal-loader.js imports this module
+// long after the page has loaded, and a DOMContentLoaded listener would never fire (#15).
+// Was: document.addEventListener('DOMContentLoaded', () => {
+function initModal() {
     // Module scripts run after the stylesheets in <head> have loaded, so the CSS check is reliable here
     ui.bs5 = bootstrapIsV5();
     if (!ui.bs5) {
         // Runs after Bootstrap 5's own DOMContentLoaded registration, since that listener was added first
+        // (imported after page load, Bootstrap 5 registers at once during its import, earlier still)
         restoreBootstrap4Plugin();
     }
     const adapter = ui.bs5 ? adapters.bs5 : adapters.bs4;
@@ -325,34 +330,43 @@ document.addEventListener('DOMContentLoaded', () => {
         const progressHtml = window.simpler.progressIndicator.getHtml('Processing');
         window.simpler.modal.bodyHtml = progressHtml;
 
-        // Start progress animation after Vue updates DOM
+        // Start the progress indicator NOW, before the request is sent (#17). It used to start
+        // inside the 50 ms timeout below, while fetch() went out straight away: a response within
+        // those 50 ms called complete() before start(), found no onComplete to run, and the later
+        // start() began a fresh 30 s bar that nothing completed, so the modal stayed on
+        // "Processing...". Only the element lookup has to wait for Vue to render the new body.
+        window.simpler.progressIndicator.start({
+            duration: 30,
+            message: 'Processing',
+            onComplete: () => {
+                // Check if the server requested a full page reload (e.g., after FUSE save)
+                if (window.simpler._forcePageReload) {
+                    window.simpler._forcePageReload = false;
+                    window.simpler.modal.show = false;
+                    window.location.reload();
+                    return;
+                }
+                // Extract GridField name and reload
+                const gridFieldName = gridFieldUrl.split('/field/')[1]?.split('/')[0];
+                if (gridFieldName && window.jQuery) {
+                    const $gridField = window.jQuery(`.grid-field[data-name="${gridFieldName}"]`);
+                    if ($gridField.length && $gridField.entwine) {
+                        window.simpler.modal.show = false;
+                        $gridField.entwine('ss').reload();
+                        return;
+                    }
+                }
+                window.location.reload();
+            }
+        });
+        const progressRun = window.simpler.progressIndicator._options;
+
+        // Attach the bar element once Vue has rendered the body
         setTimeout(() => {
             const container = document.querySelector('#simpleAdminModalBody');
-            if (container) {
-                window.simpler.progressIndicator.start({
-                    duration: 30,
-                    message: 'Processing',
-                    onComplete: () => {
-                        // Check if the server requested a full page reload (e.g., after FUSE save)
-                        if (window.simpler._forcePageReload) {
-                            window.simpler._forcePageReload = false;
-                            window.simpler.modal.show = false;
-                            window.location.reload();
-                            return;
-                        }
-                        // Extract GridField name and reload
-                        const gridFieldName = gridFieldUrl.split('/field/')[1]?.split('/')[0];
-                        if (gridFieldName && window.jQuery) {
-                            const $gridField = window.jQuery(`.grid-field[data-name="${gridFieldName}"]`);
-                            if ($gridField.length && $gridField.entwine) {
-                                window.simpler.modal.show = false;
-                                $gridField.entwine('ss').reload();
-                                return;
-                            }
-                        }
-                        window.location.reload();
-                    }
-                });
+            // Only if this run is still going: a fast response may already have completed it (with
+            // no element, complete() runs onComplete at once), and a stopped run must not be revived.
+            if (container && window.simpler.progressIndicator._options === progressRun) {
                 // Set element reference for progress updates
                 window.simpler.progressIndicator._element = container.querySelector('.simpler-progress-indicator');
             }
@@ -398,7 +412,13 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('GridField AJAX submit error:', error);
         });
     });
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initModal);
+} else {
+    initModal();
+}
 
 /**
  * Progress indicator for long-running operations

@@ -37,12 +37,14 @@ a-simpler/
 ├── client/
 │   ├── src/js/
 │   │   ├── simpler-silverstripe.js # Core: DOM events, jQuery $, window.simpler
-│   │   └── simpler-modal.js        # Opt-in: BS4 + BS5 modal (picked at runtime) + Vue 3 modal app
+│   │   ├── simpler-modal.js        # Opt-in: BS4 + BS5 modal (picked at runtime) + Vue 3 modal app
+│   │   └── simpler-modal-loader.js # Classic script that import()s the modal (AJAX/pjax requests); copied, not bundled
 │   ├── src/styles/
 │   │   └── simpler-silverstripe.scss
 │   └── dist/js/
 │       ├── simpler-silverstripe.js     # Core bundle (~5kb)
 │       ├── simpler-modal.js            # Modal bundle (~42kb, BS4 + BS5 modal; Vue 3 via import map)
+│       ├── simpler-modal-loader.js     # Classic loader for the modal module (see AdminExtension::requireModal())
 │       ├── vue.esm-browser.js          # Vue 3 dev (~530kb, for import map)
 │       └── vue.esm-browser.prod.js     # Vue 3 prod (~162kb, for import map)
 ├── webpack.mix.js
@@ -208,8 +210,10 @@ createApp({
 // Ensure import map is available (or just configure AdminExtension on LeftAndMain)
 AdminExtension::assertImportMapAvailable();
 
-// Load modal JS
-Requirements::javascript('restruct/silverstripe-simpler:client/dist/js/simpler-modal.js', ['type' => 'module']);
+// Load modal JS: the module on a full page load, simpler-modal-loader.js (classic, import()s the
+// module) during an AJAX/pjax request, where a module script would be evaluated as classic and fail (#15)
+AdminExtension::requireModal();
+// Was: Requirements::javascript('restruct/silverstripe-simpler:client/dist/js/simpler-modal.js', ['type' => 'module']);
 ```
 
 **JavaScript API:**

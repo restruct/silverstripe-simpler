@@ -28,7 +28,24 @@ import Injector from 'lib/Injector';
 window.simpler = {
     // Spinner HTML template (sr-only for Bootstrap 4)
     spinner: '<div class="text-center p-3"><div class="spinner-border" role="status"><span class="sr-only">Loading...</span></div></div>',
+    // URL of the modal module, for simpler-modal-loader.js (see below)
+    modalUrl: null,
 };
+
+// Where simpler-modal.js is served from, worked out here because this bundle is always loaded as a
+// <script src> on the first, full CMS page load, so document.currentScript knows its URL. The
+// modal sits next to it in client/dist/js. simpler-modal-loader.js needs it: that loader arrives
+// through a CMS (pjax) navigation's X-Include-JS header, which the admin evaluates as inline code,
+// so it has no URL of its own to resolve from (#15). The ?m= cache buster of this bundle is reused;
+// both files ship (and are installed) together.
+(function () {
+    const ownSrc = document.currentScript && document.currentScript.src;
+    if (ownSrc) {
+        const url = new URL('simpler-modal.js', ownSrc);
+        url.search = new URL(ownSrc).search;
+        window.simpler.modalUrl = url.href;
+    }
+})();
 
 //
 // DOM Events Emulator - 'emulate' DOMContentLoaded events for ajax-inserted/react rendered content
@@ -175,6 +192,53 @@ jQuery.entwine('simpler', function($) {
             this.find('.cancel-btn').off('.editprotected');
             this.find('input[name]').off('.editprotected');
             this._super();
+        }
+    });
+});
+
+//
+// GridFieldToggleFieldButton::setConfirmMessage() - ask before the toggle posts (#14)
+//
+// The PHP side only puts the message in a data-confirm attribute; nothing in the admin reads it
+// (its own GridField.js confirm() covers delete/archive/unlink only). Registered in the 'ss'
+// namespace on purpose: entwine dispatches every namespace separately, so a handler in 'simpler'
+// could not stop the admin's '.grid-field .action:button' onclick (in 'ss') from posting. In the
+// same namespace the more specific selector below wins (4 class-level parts against 3), and
+// _super() hands the click on to that admin handler, which posts the GridField action.
+//
+jQuery.entwine('ss', function($) {
+    $('.grid-field .action.action--toggle:button').entwine({
+        onclick: function(e) {
+            const message = this.getToggleConfirmMessage();
+            if (message && !window.confirm(message)) {
+                e.preventDefault();
+                // false also stops the click reaching the row (.ss-gridfield-item opens the record)
+                return false;
+            }
+            return this._super(e);
+        },
+
+        /**
+         * The confirm text of this toggle, or '' when it has none.
+         *
+         * A plain column button carries it as data-confirm. In the row's action menu the button is
+         * re-rendered by the admin's React GridFieldActions from the menu's data-schema, and that
+         * component copies only name, data-url and data-action-state onto the item, so the message
+         * is read back from the schema entry with the same name (its data is the button's full
+         * attribute list, GridFieldToggleFieldButton::getExtraData()).
+         */
+        getToggleConfirmMessage: function() {
+            const own = this.attr('data-confirm');
+            if (own) {
+                return own;
+            }
+            const schema = this.closest('.gridfield-actionmenu__container').data('schema');
+            const name = this.attr('name');
+            if (!Array.isArray(schema) || !name) {
+                return '';
+            }
+            const entry = schema.find((action) => action && action.data && action.data.name === name);
+            return (entry && entry.data['data-confirm']) || '';
         }
     });
 });
