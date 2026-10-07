@@ -316,6 +316,12 @@ SimplerModalAction::create('translate', 'Translate')
     ->setDialogButtonTitle('Start Translation');
 ```
 
+The modal's form posts only its own fields to the record's edit form, through
+`lekoala/silverstripe-cms-actions` (`doCustomAction`). The record method (here `translate($data)`) gets
+that data alone: the edit form is neither validated nor saved for this request, so the method validates
+its own input. For this the action adds a hidden, validation-exempt stand-in button to the edit form
+(`SimplerModalExemptAction`, rendered as nothing).
+
 ### How it works
 
 The PHP classes render a button with a `data-simpler-modal` attribute containing JSON config:

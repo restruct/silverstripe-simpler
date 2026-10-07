@@ -26,6 +26,7 @@ a-simpler/
 │   ├── EditProtectedTextField.php      # TextField with edit toggle (Vue)
 │   ├── SimplerModalField.php           # Drop-in PureModal replacement
 │   ├── SimplerModalAction.php          # Drop-in PureModalAction replacement
+│   ├── SimplerModalExemptAction.php    # Hidden, validation-exempt stand-in SimplerModalAction adds to the edit form (#18)
 │   ├── GridFieldToolbarModalAction.php # GridField toolbar button with modal (form or view-only)
 │   ├── GridFieldModalButton.php        # GridField column button with modal (per-row)
 │   ├── GridFieldToggleFieldButton.php  # GridField row button to toggle field values
