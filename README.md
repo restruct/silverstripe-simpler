@@ -2,6 +2,8 @@
 
 Makes SilverStripe Admin development simpler by re-introducing traditional basics.
 
+
+> **Known issues on this line (0.3.x):** several bugs fixed in 1.0.1 are not backported here (toolbar modal action without pure-modal, toggle confirm message, modal after CMS navigation, modal stuck on "Processing..."). See [#20](https://github.com/restruct/silverstripe-simpler/issues/20); upgrade to 1.x (Silverstripe 5/6) for the fixes.
 ## Features
 
 | Feature | Size | Loaded | Notes |
