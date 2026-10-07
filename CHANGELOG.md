@@ -9,6 +9,10 @@
   (including `GridFieldToggleIsActiveButton`'s default "Are you sure?") ran straight away. The core
   bundle now asks with `confirm()` and stops the click when it is declined, for the plain column
   button and for the item in the row's action menu.
+- **`GridFieldToolbarModalAction` fataled without `lekoala/silverstripe-pure-modal`** (#13). It loaded
+  its requirements through `SimplerModalField`, which only exists when pure-modal (a suggest) is
+  installed, so any GridField carrying a toolbar action returned a 500 ("Class SimplerModalField not
+  found"). It now calls `AdminExtension` directly, like `GridFieldModalButton`.
 
 ## 1.0.0 (2026-09-25)
 

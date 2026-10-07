@@ -328,7 +328,13 @@ class GridFieldToolbarModalAction implements GridField_HTMLProvider, GridField_A
             return [];
         }
 
-        SimplerModalField::set_requirements();
+        # The modal's requirements, called on AdminExtension directly (as GridFieldModalButton does):
+        # SimplerModalField::set_requirements() did the same, but SimplerModalField is only declared
+        # when lekoala/silverstripe-pure-modal is installed, a suggest, so without it this fataled
+        # with "Class SimplerModalField not found" and took the whole GridField down (#13).
+        // SimplerModalField::set_requirements();
+        AdminExtension::assertImportMapAvailable();
+        AdminExtension::requireModal();
 
         // Build modal config
         $modalConfig = $this->buildModalConfig($gridField);
