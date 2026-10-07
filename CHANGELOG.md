@@ -18,6 +18,10 @@
   module (`const originalValue = ;`) did not parse and the field showed raw Vue attributes. The value
   now comes from `EditProtectedTextField::getValueJSON()`, always a JSON string (null becomes `""`,
   which on Silverstripe 5 used to render as `null`).
+- **The GridField toolbar form modal stayed on "Processing..." after a fast response** (#17). The progress
+  indicator started 50 ms after the request was sent, so a response within those 50 ms was lost: the
+  modal never closed and the GridField never reloaded (the action itself had run). The indicator now
+  starts before the request; only attaching the progress bar waits for the modal body to render.
 
 ## 1.0.0 (2026-09-25)
 
