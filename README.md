@@ -541,6 +541,10 @@ Session::add_to_array('key', 'value');
 $all = Session::get_all();
 ```
 
+The helpers use the session of the current request (`Controller::curr()->getRequest()->getSession()`),
+looked up on every call, so they also follow the request in a long-running process (queue runner,
+worker). Before 1.0.3 the first session was kept for the rest of the process (#7).
+
 ## 7. HeadRequirements (import maps, early scripts)
 
 For scripts that must be in `<head>` (import maps, early config):

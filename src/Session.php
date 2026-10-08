@@ -7,14 +7,29 @@ use SilverStripe\Control\Controller;
 
 class Session
 {
+    /**
+     * No longer read or written (#7). Kept so code that references it (a subclass, a test resetting
+     * it through reflection) does not break.
+     *
+     * @deprecated The session is resolved from the current request on every call
+     */
     protected static $curr_session = null;
 
+    /**
+     * The current request's session, resolved on every call.
+     *
+     * Was cached in self::$curr_session on first use, for the rest of the process. Under PHP-FPM that
+     * is one request, but in a long-running process (queue runner, worker, worker-mode runtime, a
+     * test making several requests) every later request then read and wrote the FIRST request's
+     * session (#7). Resolving it is two getters, so there is nothing worth caching.
+     */
     protected static function current_session()
     {
-        if(!self::$curr_session) {
-            self::$curr_session = Controller::curr()->getRequest()->getSession();
-        }
-        return self::$curr_session;
+        // if(!self::$curr_session) {
+        //     self::$curr_session = Controller::curr()->getRequest()->getSession();
+        // }
+        // return self::$curr_session;
+        return Controller::curr()->getRequest()->getSession();
     }
 
     /**

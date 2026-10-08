@@ -90,4 +90,31 @@ class SessionTest extends SapphireTest
         $this->assertNull($this->coreSession->get('simpler.one'));
         $this->assertNull($this->coreSession->get('simpler.two'));
     }
+
+    /**
+     * #7: a second request in the same process gets its own session, not the first request's
+     * (queue runners, workers, worker-mode runtimes, tests that make several requests).
+     */
+    public function testFollowsTheCurrentRequestSession(): void
+    {
+        Session::set('simpler.key', 'first');
+
+        $secondSession = new CoreSession([]);
+        $secondRequest = new HTTPRequest('GET', '/second');
+        $secondRequest->setSession($secondSession);
+        $second = TestController::create();
+        $second->setRequest($secondRequest);
+        $second->pushCurrent();
+        try {
+            $this->assertNull(Session::get('simpler.key'), 'the second request does not see the first session');
+            Session::set('simpler.key', 'second');
+            $this->assertSame('second', $secondSession->get('simpler.key'));
+            $this->assertSame('first', $this->coreSession->get('simpler.key'), 'the first session is untouched');
+        } finally {
+            $second->popCurrent();
+        }
+
+        # Back on the first controller, the helpers use its session again
+        $this->assertSame('first', Session::get('simpler.key'));
+    }
 }

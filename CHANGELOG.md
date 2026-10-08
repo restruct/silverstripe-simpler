@@ -17,6 +17,10 @@
   left corners and did not stretch to the input's height. The module stylesheet now styles the wrapper
   on both majors (same markup); on SS5 it also stops the cancel button sitting 1px further over the
   input than the edit button.
+- **`Session` helpers kept the first request's session for the rest of the process** (#7). In a
+  long-running process (queue runner, worker, worker-mode runtime, a test making several requests)
+  every later request read and wrote that first session. The session is now resolved from the current
+  request on every call. The `$curr_session` static is no longer used and is deprecated.
 
 ## 1.0.2 (2026-10-07)
 
