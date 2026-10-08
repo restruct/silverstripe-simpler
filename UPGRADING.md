@@ -34,8 +34,9 @@ has its own major per Silverstripe major: `^1.2` on Silverstripe 5, `^2` on Silv
 3. **Bootstrap classes in your modal HTML**: on Silverstripe 6 the CMS CSS is Bootstrap 5, so
    Bootstrap 4-only utilities (`mr-*`, `ml-*`, `float-right`, `input-group-append`, `.close`, ...) are
    unstyled there. Where the module renders spacing or rounding utilities itself it emits both
-   spellings (`mr-2 me-2`, `rounded-right rounded-end`); `EditProtectedTextField` still wraps its
-   buttons in `input-group-append`, which Bootstrap 5 no longer styles.
+   spellings (`mr-2 me-2`, `rounded-right rounded-end`). `EditProtectedTextField` wraps its
+   buttons in `input-group-append`, which Bootstrap 5 no longer styles; since 1.0.3 the module's
+   stylesheet styles that wrapper itself, so the buttons join the input on both majors (#10).
 
 4. **`SimplerModalAction` button titles are escaped.** 0.3.x output the title raw
    (`$ButtonTitle.RAW`), so HTML in a title rendered as markup; 1.0 escapes it (`$ButtonTitle.XML`),

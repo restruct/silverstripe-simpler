@@ -1,5 +1,31 @@
 # Changelog
 
+## 1.0.3 (2026-10-08)
+
+### Fixed
+
+- **Static modal options were ignored on Silverstripe 5** (#8). The Bootstrap 4 jQuery plugin reads
+  its options only when it creates the modal instance, and the module never recreated it: a modal
+  opened with `static: true` still closed on Escape and on a backdrop click if any modal had been
+  opened before, and even on its first opening when `bodyHtml` was set before `show` (the `bodyHtml`
+  watcher's `handleUpdate` created the instance with the default options). This included
+  `data-simpler-modal` buttons with `static: true`. The Bootstrap 4 adapter now applies each
+  opening's options to the instance, and no longer calls `handleUpdate` before the modal was first
+  shown. Silverstripe 6 (Bootstrap 5) was not affected.
+- **`EditProtectedTextField`'s buttons did not join the input on Silverstripe 6** (#10). The template
+  wraps them in `.input-group-append`, which Bootstrap 5 dropped, so on SS6 the button kept its rounded
+  left corners and did not stretch to the input's height. The module stylesheet now styles the wrapper
+  on both majors (same markup); on SS5 it also stops the cancel button sitting 1px further over the
+  input than the edit button.
+- **`Session` helpers kept the first request's session for the rest of the process** (#7). In a
+  long-running process (queue runner, worker, worker-mode runtime, a test making several requests)
+  every later request read and wrote that first session. The session is now resolved from the current
+  request on every call.
+  Without a current controller (a shutdown function, a queued job run after the request, middleware
+  after the delegate) the helpers keep working as before: they use the request registered with the
+  Injector if it has a session, and otherwise the session they used last. On Silverstripe 5 that
+  check raises no "No current controller available" warning.
+
 ## 1.0.2 (2026-10-07)
 
 ### Fixed

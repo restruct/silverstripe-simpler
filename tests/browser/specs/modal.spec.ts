@@ -158,7 +158,8 @@ test.describe('simpler.modal JS API', () => {
         // https://github.com/restruct/silverstripe-simpler/issues/8 - on SS5, setting bodyHtml
         // before show creates the Bootstrap 4 instance with the default (closable) options, which
         // the static options of the show that follows do not replace.
-        test.fixme(testInfo.project.name === 'ss5', 'https://github.com/restruct/silverstripe-simpler/issues/8');
+        // Was test.fixme on SS5 until the Bootstrap 4 adapter applied the options on every show (#8):
+        // test.fixme(testInfo.project.name === 'ss5', 'https://github.com/restruct/silverstripe-simpler/issues/8');
         await openTab(page, 'modal');
         await page.evaluate(() => {
             const m = (window as any).simpler.modal;
@@ -182,7 +183,8 @@ test.describe('simpler.modal JS API', () => {
     test('static mode applies when the modal is reopened (#8 on SS5)', async ({ page }, testInfo) => {
         // https://github.com/restruct/silverstripe-simpler/issues/8 - the Bootstrap 4 plugin keeps
         // the options of the first opening, so a later static modal still closes on Escape.
-        test.fixme(testInfo.project.name === 'ss5', 'https://github.com/restruct/silverstripe-simpler/issues/8');
+        // Was test.fixme on SS5 until the Bootstrap 4 adapter applied the options on every show (#8):
+        // test.fixme(testInfo.project.name === 'ss5', 'https://github.com/restruct/silverstripe-simpler/issues/8');
         await openTab(page, 'modal');
         await page.evaluate(() => {
             const m = (window as any).simpler.modal;

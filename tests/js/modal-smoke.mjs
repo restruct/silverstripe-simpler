@@ -78,6 +78,29 @@ if (process.env.SIMPLER_SMOKE_MODE) {
     await wait(800);
     check(mode, 'closed via header X', modal.classList.contains('show'), false);
 
+    // Reopen as a static modal (#8): the Bootstrap instance must carry the options of THIS opening.
+    // On Bootstrap 4 the instance exists by now (created by the openings above, and by the bodyHtml
+    // watcher's handleUpdate), and the jQuery plugin ignored the options of a later .modal(options).
+    w.simpler.modal.bodyHtml = '<p>busy</p>';
+    w.simpler.modal.static = true;
+    w.simpler.modal.show = true;
+    await wait(600);
+    const config = mode === 'bs5' ? w.simpler.modalInstance._config : $(modal).data('bs.modal')._config;
+    check(mode, 'static reopen: backdrop option', config.backdrop, 'static');
+    check(mode, 'static reopen: keyboard option', config.keyboard, false);
+    w.simpler.modal.show = false;
+    await wait(800);
+    check(mode, 'static modal closed from JS', modal.classList.contains('show'), false);
+
+    // And a closable modal after the static one gets its closable options back
+    w.simpler.modal.show = true;
+    await wait(600);
+    const config2 = mode === 'bs5' ? w.simpler.modalInstance._config : $(modal).data('bs.modal')._config;
+    check(mode, 'closable after static: backdrop option', config2.backdrop, true);
+    check(mode, 'closable after static: keyboard option', config2.keyboard, true);
+    w.simpler.modal.show = false;
+    await wait(800);
+
     process.exit(failures.length ? 1 : 0);
 } else {
     const { spawnSync } = await import('child_process');
