@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.0.3 (unreleased)
+
+### Fixed
+
+- **Static modal options were ignored on Silverstripe 5** (#8). The Bootstrap 4 jQuery plugin reads
+  its options only when it creates the modal instance, and the module never recreated it: a modal
+  opened with `static: true` still closed on Escape and on a backdrop click if any modal had been
+  opened before, and even on its first opening when `bodyHtml` was set before `show` (the `bodyHtml`
+  watcher's `handleUpdate` created the instance with the default options). This included
+  `data-simpler-modal` buttons with `static: true`. The Bootstrap 4 adapter now applies each
+  opening's options to the instance, and no longer calls `handleUpdate` before the modal was first
+  shown. Silverstripe 6 (Bootstrap 5) was not affected.
+
 ## 1.0.2 (2026-10-07)
 
 ### Fixed

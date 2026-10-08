@@ -93,13 +93,30 @@ const adapters = {
     bs4: {
         show(el, options) {
             // Pass options when showing (static backdrop + disable keyboard close)
-            window.simpler.modalEl.modal(options);
+            // Was: window.simpler.modalEl.modal(options);
+            // The Bootstrap 4 plugin reads options only when it CREATES the instance; once
+            // data('bs.modal') exists, .modal(options) just calls show() with the first options (#8).
+            // The instance is not disposed on close (see dispose() below), and the bodyHtml watcher's
+            // handleUpdate could create it with the defaults before the first show, so apply this
+            // opening's options to the existing instance. Bootstrap 4 reads _config.backdrop and
+            // _config.keyboard when showing and on each Escape/backdrop click, so this takes effect now.
+            const instance = window.simpler.modalEl.data('bs.modal');
+            if (instance) {
+                instance._config = { ...instance._config, ...options };
+                window.simpler.modalEl.modal('show');
+            } else {
+                window.simpler.modalEl.modal(options);
+            }
         },
         hide() {
             window.simpler.modalEl.modal('hide');
         },
         update() {
-            window.simpler.modalEl.modal('handleUpdate');
+            // No handleUpdate before the first show: on Bootstrap 4 it would create the instance with
+            // the default options (#8), and there is no open modal to re-position yet anyway.
+            if (window.simpler.modalEl.data('bs.modal')) {
+                window.simpler.modalEl.modal('handleUpdate');
+            }
         },
         listen(el, eventName, handler) {
             // Bootstrap 4 triggers jQuery events, which native listeners do not receive
