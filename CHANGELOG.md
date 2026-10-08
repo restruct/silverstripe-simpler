@@ -12,6 +12,11 @@
   `data-simpler-modal` buttons with `static: true`. The Bootstrap 4 adapter now applies each
   opening's options to the instance, and no longer calls `handleUpdate` before the modal was first
   shown. Silverstripe 6 (Bootstrap 5) was not affected.
+- **`EditProtectedTextField`'s buttons did not join the input on Silverstripe 6** (#10). The template
+  wraps them in `.input-group-append`, which Bootstrap 5 dropped, so on SS6 the button kept its rounded
+  left corners and did not stretch to the input's height. The module stylesheet now styles the wrapper
+  on both majors (same markup); on SS5 it also stops the cancel button sitting 1px further over the
+  input than the edit button.
 
 ## 1.0.2 (2026-10-07)
 

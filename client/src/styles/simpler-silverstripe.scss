@@ -17,3 +17,24 @@
   padding: .25rem .5rem;  // Bootstrap .btn-sm padding
   margin-top: -1.4rem;
 }
+
+// EditProtectedTextField: join the edit/cancel buttons to the input (restruct/silverstripe-simpler#10)
+// The template wraps the buttons in .input-group-append, which Bootstrap 5 (the SS6 admin) dropped:
+// there the wrapper, not the button, gets the group's "not first child" rule, so the button kept its
+// rounded left corners and did not stretch to the input's height. These rules give the wrapper what
+// Bootstrap 4 (the SS5 admin) gives it, so one template renders the same on both majors without
+// detecting the Bootstrap version. On Bootstrap 4 they repeat its own rules (harmless).
+.edit-protected-field.input-group > .input-group-append {
+  display: flex;
+
+  > .btn {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+
+  // Bootstrap 4 overlaps adjacent buttons by 1px; only one of the two shows at a time (v-show), so
+  // that overlap pulled the cancel button 1px further over the input.
+  > .btn + .btn {
+    margin-left: 0;
+  }
+}

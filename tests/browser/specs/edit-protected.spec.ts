@@ -79,3 +79,35 @@ test('an unlocked, edited value is saved with the form', async ({ page }) => {
     await expect(after.input).toHaveValue(value);
     await expect(after.input).toHaveAttribute('readonly', '');
 });
+
+test('the edit and cancel buttons join the input like a Bootstrap input group (#10 on SS6)', async ({ page }) => {
+    // https://github.com/restruct/silverstripe-simpler/issues/10 - the buttons sat in
+    // .input-group-append, which Bootstrap 5 (SS6 admin) no longer styles: the wrapper took the
+    // group's "not first child" rule instead of the button, so the button kept its rounded left
+    // corners and did not stretch to the input's height.
+    await openRecord(page, 'Modal edit');
+    const { input, edit, cancel } = parts(page);
+
+    const joined = async (button: typeof edit) => {
+        const inputBox = (await input.boundingBox())!;
+        const buttonBox = (await button.boundingBox())!;
+        const radius = await button.evaluate((el) => {
+            const s = getComputedStyle(el);
+            return [s.borderTopLeftRadius, s.borderBottomLeftRadius];
+        });
+        return {
+            // Left corners square where the button meets the input
+            leftRadius: radius,
+            // Borders overlap by 1px (Bootstrap's margin-left: -1px), so no gap and no double border
+            gap: Math.round(buttonBox.x - (inputBox.x + inputBox.width)),
+            sameTop: Math.round(buttonBox.y) === Math.round(inputBox.y),
+            sameHeight: Math.round(buttonBox.height) === Math.round(inputBox.height),
+        };
+    };
+    const expected = { leftRadius: ['0px', '0px'], gap: -1, sameTop: true, sameHeight: true };
+
+    expect(await joined(edit), 'edit button').toEqual(expected);
+    await edit.click();
+    await expect(cancel).toBeVisible();
+    expect(await joined(cancel), 'cancel button').toEqual(expected);
+});
