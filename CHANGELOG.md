@@ -20,7 +20,11 @@
 - **`Session` helpers kept the first request's session for the rest of the process** (#7). In a
   long-running process (queue runner, worker, worker-mode runtime, a test making several requests)
   every later request read and wrote that first session. The session is now resolved from the current
-  request on every call. The `$curr_session` static is no longer used and is deprecated.
+  request on every call.
+  Without a current controller (a shutdown function, a queued job run after the request, middleware
+  after the delegate) the helpers keep working as before: they use the request registered with the
+  Injector if it has a session, and otherwise the session they used last. On Silverstripe 5 that
+  check raises no "No current controller available" warning.
 
 ## 1.0.2 (2026-10-07)
 

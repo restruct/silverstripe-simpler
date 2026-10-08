@@ -5,8 +5,10 @@ namespace Restruct\Silverstripe\Simpler\Tests;
 use ReflectionProperty;
 use Restruct\Silverstripe\Simpler\Session;
 use Restruct\Silverstripe\Simpler\Tests\Stub\TestController;
+use SilverStripe\Control\Controller;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\Session as CoreSession;
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\SapphireTest;
 
 /**
@@ -39,7 +41,9 @@ class SessionTest extends SapphireTest
     }
 
     /**
-     * Session caches the resolved session in a static that outlives the controller
+     * Session remembers the last session it resolved in a static that outlives the controller. It is
+     * only read when there is no current controller (and no injected request); with a controller,
+     * that controller's request session is the source of truth (#7).
      */
     private static function resetCachedSession(): void
     {
@@ -116,5 +120,61 @@ class SessionTest extends SapphireTest
 
         # Back on the first controller, the helpers use its session again
         $this->assertSame('first', Session::get('simpler.key'));
+    }
+
+    /**
+     * Run $test with an empty controller stack (as in a shutdown function, a queued job run after
+     * the request, or middleware after the delegate), then put the stack back.
+     *
+     * Through reflection so the test itself raises no SS5 "No current controller available"
+     * warning; with no injected HTTPRequest unless the test registers one.
+     */
+    private static function withoutControllers(callable $test): void
+    {
+        $stack = new ReflectionProperty(Controller::class, 'controller_stack');
+        $stack->setAccessible(true);
+        $saved = $stack->getValue();
+        $stack->setValue(null, []);
+        try {
+            # SapphireTest nests the Injector per test, so this unregister does not leak
+            Injector::inst()->unregisterNamedObject(HTTPRequest::class);
+            $test();
+        } finally {
+            $stack->setValue(null, $saved);
+        }
+    }
+
+    /**
+     * Without a current controller the helpers keep working on the session used last, as 1.0.2 did
+     * (#7 must not turn that into a fatal "getRequest() on null"); on SS5 without a warning either.
+     */
+    public function testWithoutAControllerUsesTheLastSession(): void
+    {
+        Session::set('simpler.key', 'value');
+
+        self::withoutControllers(function () {
+            $this->assertSame('value', Session::get('simpler.key'));
+            Session::set('simpler.other', 'later');
+        });
+
+        $this->assertSame('later', $this->coreSession->get('simpler.other'));
+    }
+
+    /**
+     * Without a current controller, a request registered with the Injector (what
+     * Director::currentRequest() falls back to) wins over the remembered session.
+     */
+    public function testWithoutAControllerPrefersTheInjectedRequest(): void
+    {
+        Session::set('simpler.key', 'from controller');
+
+        $injectedSession = new CoreSession(['simpler' => ['key' => 'from injected request']]);
+        $injected = new HTTPRequest('GET', '/injected');
+        $injected->setSession($injectedSession);
+
+        self::withoutControllers(function () use ($injected) {
+            Injector::inst()->registerService($injected, HTTPRequest::class);
+            $this->assertSame('from injected request', Session::get('simpler.key'));
+        });
     }
 }
