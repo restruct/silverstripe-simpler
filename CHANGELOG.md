@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.0.4 (2026-11-02)
+
+### Removed
+
+- **The Entwine handler of the old `EditProtectedTextField`** (#26). The field has been a Vue module
+  for a while, but the core bundle (`simpler-silverstripe.js`) still matched its
+  `.edit-protected-field` class and bound an `input` listener that toggled classes on a cancel button
+  the Vue template does not have. It did nothing, but it ran on every such field and would have started
+  interfering had the Vue template ever used a `.cancel-btn` class. The core bundle is about 0.8 KB
+  smaller. The unused Entwine template `bak_EditProtectedTextField_Entwine.ss` is gone from
+  `templates/` as well (it was in the template manifest). The field works as before.
+
 ## 1.0.3 (2026-10-08)
 
 ### Fixed
