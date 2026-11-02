@@ -1,10 +1,18 @@
 {
     "name": "restruct/silverstripe-simpler",
     "type": "silverstripe-vendormodule",
-    "description": "Tries to make Silverstripe development a bit simpler by naively re-introducting some 'common sense'/old-fashioned/SS3 basics like global Bootstrap & jQuery and a modal",
+    "description": "Opt-in helpers for simpler Silverstripe CMS admin development: Vue 3 via an import map, a Bootstrap modal from JS or PHP, GridField modal and toggle buttons, an edit-protected text field, DOM events for AJAX-loaded content and static session helpers",
     "keywords": [
         "silverstripe",
-        "KISS"
+        "silverstripe-module",
+        "silverstripe-cms",
+        "admin",
+        "vue",
+        "vue3",
+        "import-map",
+        "modal",
+        "bootstrap",
+        "gridfield"
     ],
     "license": "MIT",
     "authors": [ { "name": "Restruct", "email": "dev@restruct.nl", "homepage": "https://restruct.nl" } ],
