@@ -34,7 +34,7 @@ the modal and every PHP component are opt-in.
 
 | Helper | Size | Loaded | Needs |
 |--------|------|--------|-------|
-| **DOM events**: `DOMNodesInserted` / `DOMNodesRemoved` for content the CMS inserts later | ~7 KB | Always | - |
+| **DOM events**: `DOMNodesInserted` / `DOMNodesRemoved` for content the CMS inserts later | ~6 KB | Always | - |
 | **Vue 3 import map**: `import { createApp } from 'vue'` in your own ES modules and templates | ~162 KB (prod build) | Opt-in | `AdminExtension` on `LeftAndMain` |
 | **Modal dialog**: Bootstrap modal through the global `simpler.modal` object | ~42 KB | Opt-in | Vue import map |
 | **Edit-form modal buttons**: `SimplerModalField`, `SimplerModalAction` (drop-in for PureModal) | - | When used | Modal, `lekoala/silverstripe-pure-modal` |

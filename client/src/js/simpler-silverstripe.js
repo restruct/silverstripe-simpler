@@ -149,54 +149,6 @@ Injector.transform('simpler-form-mount-emitter', (updater) => {
 });
 
 //
-// EditProtectedTextField - Entwine handler
-//
-jQuery.entwine('simpler', function($) {
-    $('.edit-protected-field').entwine({
-        onmatch: function() {
-            const container = this;
-            const input = container.find('input[name]');
-            const editBtn = container.find('.edit-btn');
-            const cancelBtn = container.find('.cancel-btn');
-            const originalValue = container.data('original-value') || '';
-
-            function updateCancelIcon() {
-                const isDirty = input.val() !== originalValue;
-                cancelBtn
-                    .toggleClass('font-icon-cancel', !isDirty)
-                    .toggleClass('font-icon-back-in-time', isDirty)
-                    .attr('title', isDirty ? 'Revert' : 'Cancel');
-            }
-
-            editBtn.on('click.editprotected', function() {
-                input.prop('readonly', false).removeClass('text-muted');
-                editBtn.hide();
-                cancelBtn.show();
-                updateCancelIcon();
-                input.focus().select();
-            });
-
-            cancelBtn.on('click.editprotected', function() {
-                input.val(originalValue).prop('readonly', true);
-                if (!originalValue) input.addClass('text-muted');
-                editBtn.show();
-                cancelBtn.hide();
-            });
-
-            input.on('input.editprotected', updateCancelIcon);
-
-            this._super();
-        },
-        onunmatch: function() {
-            this.find('.edit-btn').off('.editprotected');
-            this.find('.cancel-btn').off('.editprotected');
-            this.find('input[name]').off('.editprotected');
-            this._super();
-        }
-    });
-});
-
-//
 // GridFieldToggleFieldButton::setConfirmMessage() - ask before the toggle posts (#14)
 //
 // The PHP side only puts the message in a data-confirm attribute; nothing in the admin reads it
