@@ -5,7 +5,7 @@ SilverStripe\Admin\LeftAndMain:
   extra_requirements_css:
     - 'restruct/silverstripe-simpler:client/dist/styles/simpler-silverstripe.css'
   extra_requirements_javascript:
-    # Core: DOM events, React mount events, jQuery alias ($), window.simpler
+    # Core: DOM events, React mount events, window.simpler (does NOT set the jQuery $ alias, see README)
     - 'restruct/silverstripe-simpler:client/dist/js/simpler-silverstripe.js'
 
 ## Opt-in features (add to your project config):
@@ -23,8 +23,9 @@ SilverStripe\Admin\LeftAndMain:
 #   extensions:
 #     - Restruct\Silverstripe\Simpler\AdminExtension
 ##
-## Option 3: Modal only via PHP classes
-## Just use SimplerModalField/SimplerModalAction - they auto-inject the import map
+## Option 3: Modal via the PHP classes (SimplerModalField/SimplerModalAction, GridField buttons)
+## They load the modal script themselves, but NOT the import map: apply Option 1 or 2 as well.
+## Without AdminExtension they only raise a warning that the import map is missing.
 ##
 ## Option 4: Modal via JS only (without PHP classes)
 # SilverStripe\Admin\LeftAndMain:
