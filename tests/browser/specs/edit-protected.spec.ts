@@ -111,3 +111,27 @@ test('the edit and cancel buttons join the input like a Bootstrap input group (#
     await expect(cancel).toBeVisible();
     expect(await joined(cancel), 'cancel button').toEqual(expected);
 });
+
+test('the core bundle binds no Entwine handlers to the Vue field (#26)', async ({ page }) => {
+    // https://github.com/restruct/silverstripe-simpler/issues/26 - simpler-silverstripe.js still
+    // carried the handler of the field's earlier Entwine version, which matched the Vue template's
+    // .edit-protected-field class and bound its 'editprotected' listeners on top of Vue's.
+    await openRecord(page, 'Modal edit');
+    const { field, edit } = parts(page);
+    // Unlocking makes Vue re-render the buttons, after which Entwine could match again.
+    await edit.click();
+    const namespaces = await field.evaluate((root) => {
+        const $ = (window as any).jQuery;
+        const found: string[] = [];
+        for (const el of [root, ...Array.from(root.querySelectorAll('*'))]) {
+            const events = $._data(el, 'events') || {};
+            for (const type of Object.keys(events)) {
+                for (const handler of events[type]) {
+                    if (handler.namespace) found.push(`${el.tagName.toLowerCase()} ${type}.${handler.namespace}`);
+                }
+            }
+        }
+        return found;
+    });
+    expect(namespaces).toEqual([]);
+});
