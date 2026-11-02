@@ -356,7 +356,7 @@ function initModal() {
             duration: 30,
             message: 'Processing',
             onComplete: () => {
-                // Check if the server requested a full page reload (e.g., after FUSE save)
+                // Check if the server requested a full page reload (e.g., after a save that syncs to an external system)
                 if (window.simpler._forcePageReload) {
                     window.simpler._forcePageReload = false;
                     window.simpler.modal.show = false;
