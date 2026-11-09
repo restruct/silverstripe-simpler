@@ -36,8 +36,10 @@ test.describe('GridFieldModalButton', () => {
         // shows as text and creates no element.
         await expect(modal(page).locator('.modal-body .spb-desc')).toHaveText('Alpha <b>description</b> & more');
         await expect(modal(page).locator('.modal-body b')).toHaveCount(0);
-        // Footer: the close button with the default text, no save button.
-        await expect(modal(page).locator('.modal-footer button', { hasText: 'Sluiten' })).toBeVisible();
+        // Footer: the close button with the default text, no save button. The default is 'Close'
+        // in the CMS language since #24 (it was a hardcoded Dutch 'Sluiten'); the admin here is English.
+        // await expect(modal(page).locator('.modal-footer button', { hasText: 'Sluiten' })).toBeVisible();
+        await expect(modal(page).locator('.modal-footer button', { hasText: 'Close' })).toBeVisible();
         await expect(modal(page).locator('#simpleAdminModalPrimaryBtn')).toBeHidden();
 
         expect(gridRequests(), 'requests to the GridField after the click').toEqual([]);
@@ -57,7 +59,8 @@ test.describe('GridFieldModalButton', () => {
         const button = rowTitled(grid, 'Modal alpha').locator('button[data-simpler-modal]');
         // The header close button differs per Bootstrap major (see the Bootstrap spec below).
         const closers = [
-            async () => modal(page).locator('.modal-footer button', { hasText: 'Sluiten' }).click(),
+            // async () => modal(page).locator('.modal-footer button', { hasText: 'Sluiten' }).click(),
+            async () => modal(page).locator('.modal-footer button', { hasText: 'Close' }).click(),
             async () => modal(page).locator('.modal-header [data-simpler-dismiss]').click(),
             async () => page.keyboard.press('Escape'),
         ];
