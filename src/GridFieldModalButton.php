@@ -76,9 +76,13 @@ class GridFieldModalButton implements GridField_ColumnProvider
     protected bool $showCloseButton = true;
 
     /**
-     * Close button text
+     * Close button text; empty means the translated default (getCloseButtonText())
      */
-    protected string $closeButtonText = 'Sluiten';
+//    protected string $closeButtonText = 'Sluiten';
+    # Was a hardcoded Dutch 'Sluiten' in every admin locale (#24). A property default cannot call
+    # _t(), so the default is resolved in getCloseButtonText(). Kept a non-nullable string, so a
+    # subclass that redeclares the property with a string keeps working.
+    protected string $closeButtonText = '';
 
     /**
      * Set the column name for this button.
@@ -125,6 +129,17 @@ class GridFieldModalButton implements GridField_ColumnProvider
     {
         $this->closeButtonText = $text;
         return $this;
+    }
+
+    /**
+     * The close button text: the one set with setCloseButtonText(), else 'Close' in the CMS
+     * language (entity GridFieldModalButton.CLOSE; lang/nl.yml has 'Sluiten').
+     */
+    public function getCloseButtonText(): string
+    {
+        return $this->closeButtonText !== ''
+            ? $this->closeButtonText
+            : _t(__CLASS__ . '.CLOSE', 'Close');
     }
 
     /**
@@ -191,7 +206,7 @@ class GridFieldModalButton implements GridField_ColumnProvider
             'title' => $this->getModalTitle($record),
             'bodyHtml' => $this->getModalContent($record),
             'closeBtn' => $this->showCloseButton,
-            'closeTxt' => $this->closeButtonText,
+            'closeTxt' => $this->getCloseButtonText(),
             'saveBtn' => false,
         ];
 
