@@ -1,0 +1,5 @@
+nl:
+  Restruct\Silverstripe\Simpler\GridFieldModalButton:
+    CLOSE: Sluiten
+  Restruct\Silverstripe\Simpler\GridFieldToolbarModalAction:
+    CANCEL: Annuleren

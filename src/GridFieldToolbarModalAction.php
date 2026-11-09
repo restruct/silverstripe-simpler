@@ -448,6 +448,8 @@ class GridFieldToolbarModalAction implements GridField_HTMLProvider, GridField_A
         $store->save($stateKey, $state);
 
         $submitLabel = htmlspecialchars($this->submitLabel);
+        # Was a hardcoded Dutch 'Annuleren' in every admin locale (#24); lang/nl.yml keeps it
+        $cancelLabel = htmlspecialchars(_t(__CLASS__ . '.CANCEL', 'Cancel'));
 
         // Container with data attributes for JS AJAX handler
         // Uses btn-toolbar for proper button alignment (matches SilverStripe Form styling)
@@ -463,7 +465,7 @@ class GridFieldToolbarModalAction implements GridField_HTMLProvider, GridField_A
         {$fieldsHtml}
     </div>
     <div class="btn-toolbar mt-3 justify-content-end" role="toolbar">
-        <button type="button" class="btn btn-outline-secondary mr-2 me-2" data-dismiss="modal">Annuleren</button>
+        <button type="button" class="btn btn-outline-secondary mr-2 me-2" data-dismiss="modal">{$cancelLabel}</button>
         <button type="button" class="btn btn-primary font-icon-tick simpler-modal-ajax-submit">
             {$submitLabel}
         </button>

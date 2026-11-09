@@ -17,6 +17,7 @@ use SilverStripe\Forms\Form;
 use SilverStripe\Forms\GridField\FormAction\StateStore;
 use SilverStripe\Forms\GridField\GridField;
 use SilverStripe\Forms\LiteralField;
+use SilverStripe\i18n\i18n;
 use SilverStripe\View\Requirements;
 use SilverStripe\View\Requirements_Backend;
 
@@ -162,6 +163,27 @@ class GridFieldToolbarModalActionRenderTest extends SapphireTest
             'actionName' => 'bulkupdate',
             'args' => ['scope' => 'all'],
         ], $store->load($stateKey));
+    }
+
+    /**
+     * #24: the form modal's cancel button was a hardcoded Dutch 'Annuleren' in every admin. It is
+     * now 'Cancel' in the CMS language, with the Dutch in lang/nl.yml.
+     */
+    public function testCancelButtonFollowsTheCmsLanguage(): void
+    {
+        $cancelText = function (): string {
+            $component = GridFieldToolbarModalAction::create('bulkupdate', 'Bulk update')
+                ->setFieldList(FieldList::create([LiteralField::create('Note', '<p>x</p>')]));
+            [, $config] = $this->renderFragment($component, $this->gridField($component), 'buttons-before-left');
+            $doc = new DOMDocument();
+            $doc->loadHTML('<?xml encoding="utf-8"?><body>' . $config['bodyHtml'] . '</body>', LIBXML_NOERROR | LIBXML_NOWARNING);
+            $cancel = (new DOMXPath($doc))->query('//button[@data-dismiss="modal"]');
+            $this->assertSame(1, $cancel->length);
+            return trim($cancel->item(0)->textContent);
+        };
+
+        $this->assertSame('Cancel', i18n::with_locale('en_US', $cancelText));
+        $this->assertSame('Annuleren', i18n::with_locale('nl_NL', $cancelText));
     }
 
     public function testShouldShowFalseRendersNothing(): void

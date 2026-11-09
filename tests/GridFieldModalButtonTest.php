@@ -10,6 +10,7 @@ use Restruct\Silverstripe\Simpler\Tests\Stub\ToggleRecord;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\Forms\GridField\GridField;
+use SilverStripe\i18n\i18n;
 use SilverStripe\View\Requirements;
 use SilverStripe\View\Requirements_Backend;
 
@@ -94,6 +95,28 @@ class GridFieldModalButtonTest extends SapphireTest
             'saveBtn' => false,
             'size' => 'lg',
         ], json_decode($button->getAttribute('data-simpler-modal'), true));
+    }
+
+    /**
+     * #24: the close button's default text was a hardcoded Dutch 'Sluiten' in every admin. It is
+     * now 'Close' in the CMS language, with the Dutch in lang/nl.yml; a text set explicitly wins.
+     */
+    public function testDefaultCloseTextFollowsTheCmsLanguage(): void
+    {
+        $record = $this->record('Alpha', true);
+        $gridField = GridField::create('Records', 'Records', ToggleRecord::get());
+        $closeText = function (TestModalButton $component) use ($gridField, $record): string {
+            $button = $this->button($component->getColumnContent($gridField, $record, 'ModalAction'));
+            return json_decode($button->getAttribute('data-simpler-modal'), true)['closeTxt'];
+        };
+
+        $this->assertSame('Close', i18n::with_locale('en_US', fn () => $closeText(new TestModalButton())));
+        $this->assertSame('Sluiten', i18n::with_locale('nl_NL', fn () => $closeText(new TestModalButton())));
+        $this->assertSame(
+            'Done',
+            i18n::with_locale('nl_NL', fn () => $closeText((new TestModalButton())->setCloseButtonText('Done'))),
+            'a text set with setCloseButtonText() is used as given'
+        );
     }
 
     public function testNoButtonWhenShouldShowButtonIsFalse(): void

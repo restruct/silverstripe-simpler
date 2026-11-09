@@ -1,0 +1,5 @@
+en:
+  Restruct\Silverstripe\Simpler\GridFieldModalButton:
+    CLOSE: Close
+  Restruct\Silverstripe\Simpler\GridFieldToolbarModalAction:
+    CANCEL: Cancel

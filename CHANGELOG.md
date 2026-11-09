@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.0.5 (unreleased)
+
+### Fixed
+
+- **Two modal button labels were Dutch in every CMS language** (#24, also reported as #9): the
+  cancel button of `GridFieldToolbarModalAction`'s form modal (`Annuleren`) and the default close
+  button text of `GridFieldModalButton` (`Sluiten`). They now go through `_t()` with English
+  defaults, `Cancel` and `Close`, and the new `lang/nl.yml` keeps the Dutch for a Dutch CMS
+  (`lang/en.yml` added alongside). Entities: `Restruct\Silverstripe\Simpler\GridFieldToolbarModalAction.CANCEL`
+  and `Restruct\Silverstripe\Simpler\GridFieldModalButton.CLOSE`.
+
+### Changed
+
+- **English (and any non-Dutch) admins now see `Close`** on a `GridFieldModalButton` modal that
+  never called `setCloseButtonText()`, where they saw `Sluiten`. Call `setCloseButtonText()` to
+  keep a fixed text. New `getCloseButtonText()` returns the text in use. The protected
+  `$closeButtonText` defaults to `''` (meaning: the translated default) instead of `'Sluiten'`.
+
 ## 1.0.4 (2026-11-02)
 
 ### Removed

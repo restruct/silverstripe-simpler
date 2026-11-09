@@ -402,7 +402,9 @@ $config->addComponent(new MyGridFieldAction());
 
 The modal shows a progress bar while the request runs. Other options: `setButtonClasses()` (default
 `btn btn-outline-primary`), `setModalSize()`, `setTargetFragment()` (default `buttons-before-left`)
-and `setActionArguments()`.
+and `setActionArguments()`. The form's cancel button reads `Cancel` in the CMS language (entity
+`Restruct\Silverstripe\Simpler\GridFieldToolbarModalAction.CANCEL`; English and Dutch ship with the
+module).
 
 **View-only mode.** Without a field list, but with `setIframeSrc()` or `setBodyHtml()`, the button
 opens the content instead of a form, without a submit button:
@@ -493,8 +495,8 @@ $config->addComponent(new MyDetailButton());
 
 Options (all fluent): `setColumnName()` (default `ModalAction`), `setButtonClasses()` (default
 `btn btn-sm btn-outline-info`), `setModalSize()` (`sm`/`lg`/`xl` or a CSS width), `setShowCloseButton()`
-(default `true`) and `setCloseButtonText()` (default `Sluiten`, Dutch for "Close": set it for an
-English or other admin).
+(default `true`) and `setCloseButtonText()` (default `Close` in the CMS language, entity
+`Restruct\Silverstripe\Simpler\GridFieldModalButton.CLOSE`; the module ships English and Dutch).
 
 The button is rendered inside `<span class="action">`: the `.action` ancestor keeps a click from
 opening the row's record, while the button itself must not carry `action`, because silverstripe/admin
